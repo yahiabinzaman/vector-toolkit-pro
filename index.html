@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vector Toolkit Pro</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Top Header Banner -->
+    <header class="header-box">
+        <div class="header-top-row">
+            <span class="main-title">VECTOR TOOLKIT PRO</span>
+            <button class="btn-close-x" id="btn-close-panel" title="Close Panel">✕</button>
+        </div>
+        <div class="doc-info" id="hdr-doc-name">Document: Untitled-1</div>
+        <div class="stat-info" id="hdr-stats">Total: 0 Embedded Raster(s) | 0 Linked | 0 Group(s)</div>
+        <div id="panel-toast" class="panel-toast"></div>
+    </header>
+
+    <!-- Navigation Tab Bar (Clean 2-Row Layout) -->
+    <nav class="nav-container" id="nav-tabs-row">
+        <div class="nav-row">
+            <button class="tab-button active" data-tab="page-relink">Relink Rasters</button>
+            <button class="tab-button" data-tab="page-embed">Fast Embed</button>
+            <button class="tab-button" data-tab="page-rasterize">Batch Rasterize</button>
+        </div>
+        <div class="nav-row">
+            <button class="tab-button" data-tab="page-wordcloud">Typography Cloud</button>
+            <button class="tab-button" data-tab="page-autoalign">Auto-Align Artboards</button>
+            <button class="tab-button" data-tab="page-cloneab">Clone Artboard</button>
+            <button class="tab-button" data-tab="page-keyring">Keyring Counter</button>
+            <button class="tab-button" data-tab="page-bijoy" style="background: rgba(0, 229, 255, 0.15); border: 1px solid #00e5ff; color: #00e5ff;">Bijoy to Unicode</button>
+        </div>
+    </nav>
+
+    <!-- TAB 1: RELINK EMBEDDED RASTERS -->
+    <main id="page-relink" class="tab-page active">
+        <fieldset class="panel-box">
+            <legend>Relink Embedded Rasters</legend>
+            <p class="panel-desc">Batch replace embedded background rasters with an external linked file:</p>
+
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Source File (PSD / Image):</legend>
+                <div class="row">
+                    <input type="text" id="relink-filepath" placeholder="" style="flex: 1;">
+                    <button class="btn-browse" id="btn-browse-file">Browse...</button>
+                </div>
+            </fieldset>
+
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Choose ANSI Version / Engine:</legend>
+                <div style="display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap;">
+                    <button type="button" class="btn-ansi-version active" data-version="auto" style="flex: 1; min-width: 70px; padding: 7px 4px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #ff4500; background: #ff4500; color: #ffffff; cursor: pointer; transition: all 0.2s;">Auto</button>
+                    <button type="button" class="btn-ansi-version" data-version="v1" style="flex: 1; min-width: 65px; padding: 7px 4px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #444; background: #282828; color: #bbb; cursor: pointer; transition: all 0.2s;">ANSI V1</button>
+                    <button type="button" class="btn-ansi-version" data-version="v2" style="flex: 1; min-width: 65px; padding: 7px 4px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #444; background: #282828; color: #bbb; cursor: pointer; transition: all 0.2s;">ANSI V2</button>
+                    <button type="button" class="btn-ansi-version" data-version="v3" style="flex: 1; min-width: 65px; padding: 7px 4px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #444; background: #282828; color: #bbb; cursor: pointer; transition: all 0.2s;">ANSI V3</button>
+                </div>
+                <input type="hidden" id="selected-bijoy-version" value="auto">
+                <div id="version-desc-text" style="font-size: 10.5px; color: #aaa; margin-top: 6px; line-height: 1.3;">
+                    Mode: <strong style="color: #ff7733;" id="version-mode-title">Auto-Detect</strong> <span id="version-mode-sub">(Tests V1, V2 & V3 dynamically for cleanest output)</span>
+                </div>
+            </fieldset>
+
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Target Scope:</legend>
+                <div class="row">
+                    <label class="radio-label">
+                        <input type="radio" name="relink-scope" value="all" checked id="rb-relink-all">
+                        <span id="lbl-relink-all">All Embedded Rasters (0)</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="relink-scope" value="selected" id="rb-relink-sel">
+                        <span id="lbl-relink-sel">Selected Items Only (0)</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Options:</legend>
+                <div class="row">
+                    <label class="check-label">
+                        <input type="checkbox" id="chk-preserve-clip" checked>
+                        <span>Preserve Clipping Masks & Stacking Order (Z-Index)</span>
+                    </label>
+                </div>
+                <div class="row">
+                    <label class="check-label">
+                        <input type="checkbox" id="chk-preserve-dim" checked>
+                        <span>Preserve Dimensions & Position (X, Y, Width, Height)</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <button class="btn-action-main" id="btn-relink-main">Relink All 0 Embedded Rasters</button>
+        </fieldset>
+    </main>
+
+    <!-- TAB 2: FAST BATCH EMBED -->
+    <main id="page-embed" class="tab-page">
+        <fieldset class="panel-box">
+            <legend>Fast Batch Embed</legend>
+            <p class="panel-desc">High-Speed Embed Engine: Embeds placed assets instantly with zero UI lag:</p>
+
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Target Linked Items:</legend>
+                <div class="row">
+                    <label class="radio-label">
+                        <input type="radio" name="embed-scope" value="all" checked id="rb-embed-all">
+                        <span id="lbl-embed-all">All Linked Files in Document (0 files)</span>
+                    </label>
+                </div>
+                <div class="row">
+                    <label class="radio-label">
+                        <input type="radio" name="embed-scope" value="selected" id="rb-embed-sel">
+                        <span id="lbl-embed-sel">Selected Linked Items Only (0 selected)</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <button class="btn-action-main" id="btn-embed-main">Embed All 0 Linked Files (Fast Mode)</button>
+        </fieldset>
+    </main>
+
+    <!-- TAB 3: BATCH RASTERIZE FOR PRINT -->
+    <main id="page-rasterize" class="tab-page">
+        <fieldset class="panel-box">
+            <legend>Batch Rasterize (Print Production)</legend>
+            <p class="panel-desc">Ultra-fast rasterize vector designs individually for production print:</p>
+
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Target Designs to Rasterize:</legend>
+                <div class="row">
+                    <label class="radio-label">
+                        <input type="radio" name="rast-scope" value="sample" checked id="rb-rast-sample">
+                        <span id="lbl-rast-sample">Match Selected Sample Size</span>
+                    </label>
+                </div>
+                <div class="row">
+                    <label class="radio-label">
+                        <input type="radio" name="rast-scope" value="selected" id="rb-rast-sel">
+                        <span id="lbl-rast-sel">Each Selected Group Individually (0 selected)</span>
+                    </label>
+                </div>
+                <div class="row">
+                    <label class="radio-label">
+                        <input type="radio" name="rast-scope" value="all" id="rb-rast-all">
+                        <span id="lbl-rast-all">All Top-Level Groups in Document (0 groups)</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Print Rasterization Settings:</legend>
+                <div class="row">
+                    <span style="font-weight: 600; width: 110px;">Resolution (PPI):</span>
+                    <select id="rast-ppi" style="flex: 1;">
+                        <option value="300" selected>300 PPI [Turbo Speed - Industry Standard]</option>
+                        <option value="450">450 PPI [High-Definition Print]</option>
+                        <option value="600">600 PPI [Ultra Fine Micro-Detail]</option>
+                        <option value="150">150 PPI [Fast Proofing Draft]</option>
+                        <option value="custom">Custom PPI...</option>
+                    </select>
+                    <input type="number" id="rast-custom-ppi" value="300" placeholder="PPI" min="10" max="2400" style="width: 65px; display: none;">
+                </div>
+                <div class="row">
+                    <span style="font-weight: 600; width: 110px;">Color Model:</span>
+                    <select id="rast-color" style="flex: 1;">
+                        <option value="CMYK" selected>CMYK (Print Default)</option>
+                        <option value="RGB">RGB</option>
+                        <option value="Grayscale">Grayscale</option>
+                    </select>
+                    <label class="check-label" style="margin-left: 8px;">
+                        <input type="checkbox" id="rast-transparent" checked>
+                        <span>Transparent Background</span>
+                    </label>
+                </div>
+                <div class="row">
+                    <span style="font-weight: 600; width: 110px;">Anti-aliasing:</span>
+                    <select id="rast-aa" style="flex: 1;">
+                        <option value="Art" selected>Art Optimized (Supersampling)</option>
+                        <option value="Type">Type Optimized (Hinted)</option>
+                        <option value="None">None</option>
+                    </select>
+                </div>
+            </fieldset>
+
+            <button class="btn-action-main" id="btn-rasterize-main">Batch Rasterize All Matching Designs</button>
+        </fieldset>
+    </main>
+
+    <!-- TAB 4: TYPOGRAPHY WORD CLOUD GENERATOR PRO -->
+    <main id="page-wordcloud" class="tab-page">
+        <fieldset class="panel-box">
+            <legend>Typography Word Cloud Generator Pro</legend>
+            <p class="panel-desc">Generate tight, non-overlapping typography posters with 1-click presets & color palettes:</p>
+
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>1-Click Master Style Presets:</legend>
+                <div class="row">
+                    <span style="margin-right: 6px; font-weight: 600;">Preset:</span>
+                    <select id="wc-preset" style="flex: 1;">
+                        <option value="0" selected>1. Swiss Modern Poster (Bold/Black, 0/90 deg, Monochrome)</option>
+                        <option value="1">2. Cyberpunk Neon (0/90/-90 deg, Electric Neon Palette)</option>
+                        <option value="2">3. Editorial Classic (0 deg Horizontal, Title Case, Elegant)</option>
+                        <option value="3">4. Chaotic Typography Art (Free Angles 0/45/90/-45, Mixed)</option>
+                        <option value="4">5. T-Shirt / Radial Cluster (Tight Circle, 3-Tier Hierarchy)</option>
+                        <option value="5">6. Vintage Warm Poster (Warm Autumn Palette, 0/90 deg)</option>
+                    </select>
+                </div>
+            </fieldset>
+
+            <div class="row">
+                <span style="width: 70px;">Split Text:</span>
+                <select id="wc-split" style="flex: 1;">
+                    <option value="0" selected>Line by Line (Full Names)</option>
+                    <option value="1">Individual Words</option>
+                    <option value="2">Keep Frames As-Is</option>
+                </select>
+                <span style="margin-left: 8px;">Case:</span>
+                <select id="wc-case" style="width: 120px;">
+                    <option value="0">Keep Original</option>
+                    <option value="1">lowercase</option>
+                    <option value="2">Title Case</option>
+                    <option value="3" selected>UPPERCASE</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <label class="check-label" style="flex: 1;">
+                    <input type="checkbox" id="wc-mix-weights" checked>
+                    <span>Mix Weights (Bold/Regular)</span>
+                </label>
+                <span>Tracking:</span>
+                <select id="wc-tracking" style="width: 140px;">
+                    <option value="-25" selected>Tight Poster (-25)</option>
+                    <option value="-50">Ultra Tight (-50)</option>
+                    <option value="0">Normal (0)</option>
+                    <option value="50">Wide (+50)</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <span style="width: 85px;">Cluster Shape:</span>
+                <select id="wc-aspect" style="flex: 1;">
+                    <option value="0.7" selected>Vertical Poster (0.7)</option>
+                    <option value="1.0">Square / Circle (1.0)</option>
+                    <option value="1.6">Wide Banner (1.6)</option>
+                    <option value="2.2">Panoramic (2.2)</option>
+                </select>
+                <span>Padding (pt):</span>
+                <input type="number" id="wc-padding" value="3" style="width: 45px;">
+            </div>
+
+            <div class="row">
+                <span>Min (pt):</span>
+                <input type="number" id="wc-min-sz" value="14" style="width: 45px;">
+                <span>Max (pt):</span>
+                <input type="number" id="wc-max-sz" value="58" style="width: 45px;">
+                <span>Hierarchy:</span>
+                <select id="wc-hierarchy" style="flex: 1;">
+                    <option value="0" selected>Hero Hierarchy (Few Big, Many Small)</option>
+                    <option value="1">Uniform Random</option>
+                    <option value="2">3-Tier (Big/Med/Small)</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <span style="width: 65px;">Rotation:</span>
+                <select id="wc-rot" style="flex: 1;">
+                    <option value="0" selected>Horizontal & Vertical (0, 90, -90 deg)</option>
+                    <option value="1">Horizontal & 90 deg Up (0, 90 deg)</option>
+                    <option value="2">Horizontal Only (0 deg)</option>
+                    <option value="3">Free Angles (0, 45, 90, -45 deg)</option>
+                    <option value="4">Random (0 - 360 deg)</option>
+                </select>
+                <span>Vert %:</span>
+                <input type="number" id="wc-vert-pct" value="30" style="width: 45px;">
+                <span>%</span>
+            </div>
+
+            <div class="row">
+                <span style="width: 80px;">Color Palette:</span>
+                <select id="wc-palette" style="flex: 1;">
+                    <option value="0" selected>1. Poster Monochrome (Black & Gray Shades)</option>
+                    <option value="1">2. Cyberpunk Neon (Cyan, Magenta, Neon Yellow)</option>
+                    <option value="2">3. Vintage Warm (Rust, Mustard, Terracotta, Forest)</option>
+                    <option value="3">4. Nordic Ocean (Navy, Sky Blue, Teal)</option>
+                    <option value="4">5. Luxury Gold & Slate (Gold, Bronze, Charcoal)</option>
+                    <option value="5">6. Keep Current Document Swatches</option>
+                </select>
+            </div>
+
+            <button class="btn-action-main" id="btn-wordcloud-main">Generate Typography Word Cloud Poster</button>
+        </fieldset>
+    </main>
+
+    <!-- TAB 5: AUTO-ALIGN & FIT TO ARTBOARDS (AutoalignV6) -->
+    <main id="page-autoalign" class="tab-page">
+        <fieldset class="panel-box">
+            <legend>Auto-Align & Fit Images to Artboards</legend>
+            <p class="panel-desc">
+                Smart number extraction sorts selected images (e.g. "Artboard 01", "Artboard 02") and sequentially fits Image 1 → Artboard 1, Image 2 → Artboard 2 with exact bounds.
+            </p>
+
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Placement Options:</legend>
+                <div class="row">
+                    <label class="check-label">
+                        <input type="checkbox" id="chk-autoalign-embed" checked>
+                        <span>Automatically Embed Placed Images after fitting</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <button class="btn-action-main" id="btn-autoalign-main">Auto-Align & Fit Images to Artboards</button>
+        </fieldset>
+    </main>
+
+    <!-- TAB 6: CLONE ARTBOARD (DuplicatingArtboardWin) -->
+    <main id="page-cloneab" class="tab-page">
+        <fieldset class="panel-box">
+            <legend>Smart Artboard Duplicator</legend>
+            <p class="panel-desc">
+                Directly duplicates the active artboard + unlocked & locked objects + live text to the right without clipboard delay.
+            </p>
+
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Clone Settings:</legend>
+                <div class="row">
+                    <span style="width: 120px;">Artboard Gap (pt):</span>
+                    <input type="number" id="txt-clone-gap" value="50" style="width: 70px;">
+                    <span style="margin-left: 12px; width: 100px;">Duplicate Copies:</span>
+                    <input type="number" id="txt-clone-copies" value="1" min="1" max="100" style="width: 60px;">
+                </div>
+            </fieldset>
+
+            <button class="btn-action-main" id="btn-cloneab-main">Clone Active Artboard & Content</button>
+        </fieldset>
+    </main>
+
+    <!-- TAB 7: KEYRING & QUANTITY COUNTER (Keyring Couter V.2) -->
+    <main id="page-keyring" class="tab-page">
+        <fieldset class="panel-box">
+            <legend>Keyring & Quantity Counter Pro</legend>
+            <p class="panel-desc">
+                Scans selected text frames on the canvas, sums all numbers (1 to Limit), and generates an itemized breakdown report.
+            </p>
+
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Calculation Filter:</legend>
+                <div class="row">
+                    <span style="width: 140px;">Max Limit Per Item:</span>
+                    <input type="number" id="txt-keyring-limit" value="500" style="width: 80px;">
+                </div>
+            </fieldset>
+
+            <button class="btn-action-main" id="btn-keyring-main">Calculate Selected Numbers & Quantities</button>
+
+            <!-- Results Output Box -->
+            <div id="keyring-results-box" style="display: none; margin-top: 10px; background: #1a1a1a; border: 1px solid #383838; border-radius: 4px; padding: 10px; font-family: monospace; font-size: 11px;">
+                <div style="color: #00ff66; font-weight: bold; margin-bottom: 4px;">CALCULATION SUMMARY:</div>
+                <div id="keyring-summary-txt" style="color: #ffffff; margin-bottom: 6px;"></div>
+                <div style="color: #00e5ff; font-weight: bold; border-top: 1px solid #333; padding-top: 6px; margin-bottom: 4px;">ITEMIZED BREAKDOWN:</div>
+                <div id="keyring-breakdown-list" style="color: #ccc; max-height: 140px; overflow-y: auto;"></div>
+            </div>
+        </fieldset>
+    </main>
+
+    
+    <!-- TAB 8: BIJOY TO UNICODE BANGLA BOOK CONVERTER -->
+    <main id="page-bijoy" class="tab-page">
+        <fieldset class="panel-box">
+            <legend>Bijoy to Unicode Converter Pro</legend>
+            <p class="panel-desc">
+                Batch convert 400+ page books, artboards, and text frames from legacy Bijoy (ANSI) to clean Unicode:
+            </p>
+
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Choose ANSI Version / Engine:</legend>
+                <div style="display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap;">
+                    <button type="button" class="btn-ansi-version active" data-version="auto" style="flex: 1; min-width: 70px; padding: 7px 4px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #ff4500; background: #ff4500; color: #ffffff; cursor: pointer; transition: all 0.2s;">Auto</button>
+                    <button type="button" class="btn-ansi-version" data-version="v1" style="flex: 1; min-width: 65px; padding: 7px 4px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #444; background: #282828; color: #bbb; cursor: pointer; transition: all 0.2s;">ANSI V1</button>
+                    <button type="button" class="btn-ansi-version" data-version="v2" style="flex: 1; min-width: 65px; padding: 7px 4px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #444; background: #282828; color: #bbb; cursor: pointer; transition: all 0.2s;">ANSI V2</button>
+                    <button type="button" class="btn-ansi-version" data-version="v3" style="flex: 1; min-width: 65px; padding: 7px 4px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #444; background: #282828; color: #bbb; cursor: pointer; transition: all 0.2s;">ANSI V3</button>
+                </div>
+                <input type="hidden" id="selected-bijoy-version" value="auto">
+                <div id="version-desc-text" style="font-size: 10.5px; color: #aaa; margin-top: 6px; line-height: 1.3;">
+                    Mode: <strong style="color: #ff7733;" id="version-mode-title">Auto-Detect</strong> <span id="version-mode-sub">(Tests V1, V2 & V3 dynamically for cleanest output)</span>
+                </div>
+            </fieldset>
+
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Target Scope:</legend>
+                <div class="row">
+                    <label class="radio-label">
+                        <input type="radio" name="bijoy-scope" value="all" id="rb-bijoy-all">
+                        <span>All 400+ Pages / Artboards (Entire Document)</span>
+                    </label>
+                </div>
+                <div class="row" style="margin-top: 4px;">
+                    <label class="radio-label">
+                        <input type="radio" name="bijoy-scope" value="selected" checked id="rb-bijoy-sel">
+                        <span>Selected Text Frames Only</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Font to Apply After Conversion:</legend>
+                <div class="row">
+                    <span style="width: 100px;">Target Font:</span>
+                    <select id="bijoy-font-select" style="flex: 1;">
+                        <option value="Bornomala-Regular" selected>Bornomala (Unicode Regular)</option>
+                        <option value="Bornomala-Bold">Bornomala Bold (Unicode)</option>
+                        <option value="Kalpurush">Kalpurush</option>
+                        <option value="SiyamRupali">Siyam Rupali</option>
+                        <option value="SolaimanLipi">SolaimanLipi</option>
+                        <option value="keep">Keep Current Font (No font change)</option>
+                    </select>
+                </div>
+            </fieldset>
+
+            <fieldset class="panel-box" style="margin-bottom: 10px;">
+                <legend>Conversion Rules & Layer Access:</legend>
+                <div class="row" style="margin-bottom: 4px;">
+                    <label class="check-label">
+                        <input type="checkbox" id="chk-bijoy-kars" checked>
+                        <span>Fix Pre-kars (i-kar, e-kar), Post-kars, and Reph positional reordering</span>
+                    </label>
+                </div>
+                <div class="row">
+                    <label class="check-label">
+                        <input type="checkbox" id="chk-bijoy-unlock" checked>
+                        <span>Process locked and hidden layers across all pages</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <button class="btn-action-main" id="btn-bijoy-convert">Convert Bijoy to Unicode & Apply Font</button>
+
+            <!-- Minimal Native Status Footer Box -->
+            <div id="bijoy-status-box" style="display: none; margin-top: 10px; background: #222222; border: 1px solid #383838; border-radius: 3px; padding: 8px 10px; font-size: 10.5px; color: #b8b8b8;">
+                <div style="font-weight: 600; color: #e0e0e0; margin-bottom: 4px;" id="bijoy-status-heading">Conversion Complete</div>
+                <div id="bijoy-status-details" style="color: #8f8f8f; line-height: 1.45;"></div>
+            </div>
+        </fieldset>
+    </main>
+
+    <!-- HUD TERMINAL MATRIX CONSOLE (LIVESTREAM) -->
+    <section class="hud-box" id="hud-console-screen">
+        <div class="hud-title">&gt;&gt; ROOT@VECTOR-TOOLKIT:~# EXEC_PROTOCOL --LIVE-STREAM</div>
+        <div class="hud-protocol" id="hud-task-name">PROTOCOL: INITIALIZING...</div>
+
+        <div class="hud-metrics-row">
+            <span id="hud-processed">PROCESSED: 0 / 0</span>
+            <span id="hud-remaining">REMAINING: 0</span>
+            <span id="hud-percent">[ 0.0% ]</span>
+        </div>
+
+        <div class="hud-metrics-row" style="color: #ff9900;">
+            <span id="hud-speed">SPEED: -- U/S</span>
+            <span id="hud-elapsed">ELAPSED: 00:00s</span>
+            <span id="hud-eta">ETA: --:--s</span>
+        </div>
+
+        <div class="hud-ascii-bar" id="hud-bar-display">[ .............................. ] 0.0%</div>
+
+        <div class="hud-console">
+            <div id="hud-log-line1">&gt;&gt; [BOOT]: INITIALIZING PROTOCOL</div>
+            <div id="hud-log-line2">&gt;&gt; [CORE]: ALLOCATING HEAP MEMORY</div>
+            <div id="hud-log-line3" class="active-line">&gt;&gt; [EXEC]: STREAMING UNIT #1...</div>
+        </div>
+    </section>
+
+    <!-- Footer Credit -->
+        <!-- Footer Credit -->
+    <footer class="app-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 7px 12px; border-top: 1px solid #333333; background: #1e1e1e; font-size: 11px; margin-top: auto;">
+        <a href="https://github.com/yahiabinzaman" id="btn-author-link" class="footer-link" title="Visit GitHub Profile" onclick="openAuthorProfile(event); return false;" style="color: #9e9e9e; text-decoration: none; cursor: pointer;">
+            Developed by <strong style="color: #4a90e2; text-decoration: underline; font-weight: 600;">Yahia Bin Zaman</strong>
+        </a>
+        <span class="footer-version" style="font-size: 10px; color: #666666; font-family: monospace;">v2.0.0</span>
+    </footer>
+
+    <script src="js/CSInterface.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
