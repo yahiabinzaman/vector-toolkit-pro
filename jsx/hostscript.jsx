@@ -2487,6 +2487,142 @@ var VectorToolkitHost = {
         }
     },
 
+        executePageNumbers: function (jsonStr) {
+        try {
+            if (app.documents.length === 0) {
+                return JSON.stringify({ success: false, error: "No active document found." });
+            }
+            var doc = app.activeDocument;
+            var config = (typeof jsonStr === "string") ? eval("(" + jsonStr + ")") : jsonStr;
+
+            var mode = config.mode || "insert"; // "insert" or "replace"
+            var startNum = parseInt(config.startNum, 10);
+            if (isNaN(startNum)) startNum = 1;
+
+            var templateStr = config.template || "*00p*";
+            var count = doc.artboards.length;
+
+            function padDigits(num, size) {
+                var s = num + "";
+                while (s.length < size) s = "0" + s;
+                return s;
+            }
+
+            function getDateStr() {
+                var d = new Date();
+                return (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear();
+            }
+
+            function getTimeStr() {
+                var d = new Date();
+                var h = d.getHours();
+                var m = d.getMinutes();
+                if (m < 10) m = "0" + m;
+                var ampm = h >= 12 ? "PM" : "AM";
+                h = h % 12;
+                h = h ? h : 12;
+                return h + ":" + m + " " + ampm;
+            }
+
+            function formatPageString(tmpl, abIdx, start, total) {
+                var cur = abIdx + start;
+                var res = tmpl;
+                res = res.replace(/\*000p\*/g, padDigits(cur, 4));
+                res = res.replace(/\*00p\*/g, padDigits(cur, 3));
+                res = res.replace(/\*0p\*/g, padDigits(cur, 2));
+                res = res.replace(/\*page\*/g, cur);
+
+                res = res.replace(/\*000pages\*/g, padDigits(total, 4));
+                res = res.replace(/\*00pages\*/g, padDigits(total, 3));
+                res = res.replace(/\*0pages\*/g, padDigits(total, 2));
+                res = res.replace(/\*pages\*/g, total);
+
+                res = res.replace(/\*date\*/g, getDateStr());
+                res = res.replace(/\*time\*/g, getTimeStr());
+                res = res.replace(/\*fname\*/g, doc.path === "" ? "Full Name: <unsaved document>" : doc.fullName);
+                res = res.replace(/\*file\*/g, doc.name);
+                return res;
+            }
+
+            function isInsideArtboard(tf, bounds) {
+                var l = tf.left, t = tf.top;
+                return (l >= bounds[0] - 10 && l <= bounds[2] + 10 && t <= bounds[1] + 10 && t >= bounds[3] - 10);
+            }
+
+            if (mode === "replace") {
+                var findTarget = config.findText || "000";
+                var updatedCount = 0;
+                for (var i = 0; i < count; i++) {
+                    var ab = doc.artboards[i];
+                    var rect = ab.artboardRect;
+                    var formatted = formatPageString(templateStr, i, startNum, count);
+
+                    for (var j = 0; j < doc.textFrames.length; j++) {
+                        var tf = doc.textFrames[j];
+                        if (isInsideArtboard(tf, rect)) {
+                            if (tf.contents === findTarget || tf.contents.indexOf(findTarget) !== -1) {
+                                tf.contents = tf.contents.replace(findTarget, formatted);
+                                updatedCount++;
+                                break;
+                            }
+                        }
+                    }
+                }
+                app.redraw();
+                return JSON.stringify({ success: true, count: updatedCount, total: count, mode: "replace" });
+            } else {
+                var pLayer;
+                try {
+                    pLayer = doc.layers["Page Numbers"];
+                } catch (e) {
+                    pLayer = doc.layers.add();
+                    pLayer.name = "Page Numbers";
+                }
+
+                var marginPt = (parseFloat(config.margin) || 0.25) * 72;
+                var vPos = config.vPos || "bottom";
+                var hPos = config.hPos || "right";
+
+                for (var i = 0; i < count; i++) {
+                    var formatted = formatPageString(templateStr, i, startNum, count);
+                    var itext = pLayer.textFrames.add();
+                    itext.contents = formatted;
+                    var fontSize = itext.textRange.characterAttributes.size;
+
+                    var ab = doc.artboards[i];
+                    var r = ab.artboardRect;
+
+                    var abLeft = r[0] + marginPt;
+                    var abTop = r[1] - marginPt;
+                    var abRight = r[2] - marginPt;
+                    var abBottom = r[3] + marginPt + fontSize;
+                    var abCenter = abLeft + (abRight - abLeft) / 2;
+
+                    if (hPos === "right") {
+                        itext.left = abRight;
+                        itext.textRange.paragraphAttributes.justification = Justification.RIGHT;
+                    } else if (hPos === "center") {
+                        itext.left = abCenter;
+                        itext.textRange.paragraphAttributes.justification = Justification.CENTER;
+                    } else {
+                        itext.left = abLeft;
+                        itext.textRange.paragraphAttributes.justification = Justification.LEFT;
+                    }
+
+                    if (vPos === "top") {
+                        itext.top = abTop;
+                    } else {
+                        itext.top = abBottom;
+                    }
+                }
+                app.redraw();
+                return JSON.stringify({ success: true, count: count, total: count, mode: "insert" });
+            }
+        } catch (err) {
+            return JSON.stringify({ success: false, error: err.toString() });
+        }
+    },
+
     _calculateBounds: function (items) {
         var minX = Infinity, maxY = -Infinity, maxX = -Infinity, minY = Infinity;
         for (var i = 0; i < items.length; i++) {

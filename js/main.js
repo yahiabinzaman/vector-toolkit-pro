@@ -681,4 +681,126 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+
+    // ==========================================
+    // TAB 9: PAGE NUMBERS PRO (001, 002...)
+    // ==========================================
+    var rbPageNumInsert = document.getElementById("rb-pagenum-insert");
+    var rbPageNumReplace = document.getElementById("rb-pagenum-replace");
+    var grpPageNumFind = document.getElementById("grp-pagenum-find");
+    var rowPageNumMargin = document.getElementById("row-pagenum-margin");
+    var panelPageNumPos = document.getElementById("panel-pagenum-pos");
+    var txtPageNumFind = document.getElementById("pagenum-find-text");
+    var txtPageNumStart = document.getElementById("pagenum-start");
+    var txtPageNumMargin = document.getElementById("pagenum-margin");
+    var txtPageNumTemplate = document.getElementById("pagenum-template");
+    var btnPageNumApply = document.getElementById("btn-pagenum-apply");
+    var pagenumStatusBox = document.getElementById("pagenum-status-box");
+    var pagenumStatusHeading = document.getElementById("pagenum-status-heading");
+    var pagenumStatusDetails = document.getElementById("pagenum-status-details");
+
+    if (rbPageNumInsert && rbPageNumReplace) {
+        rbPageNumInsert.addEventListener("change", function () {
+            if (rbPageNumInsert.checked) {
+                if (grpPageNumFind) grpPageNumFind.style.display = "none";
+                if (rowPageNumMargin) rowPageNumMargin.style.display = "flex";
+                if (panelPageNumPos) panelPageNumPos.style.display = "block";
+            }
+        });
+
+        rbPageNumReplace.addEventListener("change", function () {
+            if (rbPageNumReplace.checked) {
+                if (grpPageNumFind) grpPageNumFind.style.display = "flex";
+                if (rowPageNumMargin) rowPageNumMargin.style.display = "none";
+                if (panelPageNumPos) panelPageNumPos.style.display = "none";
+            }
+        });
+    }
+
+    // Quick Insert Buttons
+    function appendPageToken(token) {
+        if (txtPageNumTemplate) {
+            txtPageNumTemplate.value = txtPageNumTemplate.value + token;
+        }
+    }
+
+    var token001 = document.getElementById("btn-token-001");
+    var token01 = document.getElementById("btn-token-01");
+    var tokenPage = document.getElementById("btn-token-page");
+    var tokenPages = document.getElementById("btn-token-pages");
+    var tokenDate = document.getElementById("btn-token-date");
+    var tokenTime = document.getElementById("btn-token-time");
+    var tokenFile = document.getElementById("btn-token-file");
+    var tokenClear = document.getElementById("btn-token-clear");
+
+    if (token001) token001.addEventListener("click", function() { appendPageToken("*00p*"); });
+    if (token01) token01.addEventListener("click", function() { appendPageToken("*0p*"); });
+    if (tokenPage) tokenPage.addEventListener("click", function() { appendPageToken("*page*"); });
+    if (tokenPages) tokenPages.addEventListener("click", function() { appendPageToken("*pages*"); });
+    if (tokenDate) tokenDate.addEventListener("click", function() { appendPageToken("*date*"); });
+    if (tokenTime) tokenTime.addEventListener("click", function() { appendPageToken("*time*"); });
+    if (tokenFile) tokenFile.addEventListener("click", function() { appendPageToken("*file*"); });
+    if (tokenClear) tokenClear.addEventListener("click", function() { if (txtPageNumTemplate) txtPageNumTemplate.value = ""; });
+
+    if (btnPageNumApply) {
+        btnPageNumApply.addEventListener("click", function () {
+            var mode = (rbPageNumReplace && rbPageNumReplace.checked) ? "replace" : "insert";
+            var findVal = txtPageNumFind ? txtPageNumFind.value : "000";
+            var startVal = txtPageNumStart ? txtPageNumStart.value : "1";
+            var marginVal = txtPageNumMargin ? txtPageNumMargin.value : "0.25";
+            var templateVal = (txtPageNumTemplate && txtPageNumTemplate.value.trim() !== "") ? txtPageNumTemplate.value : "*00p*";
+
+            var vPosElem = document.querySelector('input[name="pagenum-vpos"]:checked');
+            var hPosElem = document.querySelector('input[name="pagenum-hpos"]:checked');
+            var vPos = vPosElem ? vPosElem.value : "bottom";
+            var hPos = hPosElem ? hPosElem.value : "right";
+
+            var config = {
+                mode: mode,
+                findText: findVal,
+                startNum: startVal,
+                margin: marginVal,
+                vPos: vPos,
+                hPos: hPos,
+                template: templateVal
+            };
+
+            btnPageNumApply.disabled = true;
+            btnPageNumApply.innerText = "Applying Page Numbers...";
+
+            if (pagenumStatusBox) pagenumStatusBox.style.display = "none";
+
+            csInterface.evalScript("VectorToolkitHost.executePageNumbers(" + JSON.stringify(JSON.stringify(config)) + ")", function (res) {
+                btnPageNumApply.disabled = false;
+                btnPageNumApply.innerText = "Apply Page Numbers (001, 002...)";
+
+                try {
+                    var data = JSON.parse(res);
+                    if (data.success) {
+                        if (pagenumStatusBox && pagenumStatusHeading && pagenumStatusDetails) {
+                            pagenumStatusBox.style.display = "block";
+                            pagenumStatusHeading.innerText = "Page Numbers Applied Successfully!";
+                            pagenumStatusDetails.innerHTML = "Processed: " + data.count + " of " + data.total + " artboards<br>" +
+                                "Format: " + templateVal + " (Mode: " + data.mode + ")<br>" +
+                                "<strong>Thanks to Legend Yahia Bin Zaman</strong>";
+                        }
+                        showToast("Page numbering complete! Thanks to Legend Yahia Bin Zaman", "success");
+                    } else {
+                        if (pagenumStatusBox && pagenumStatusHeading && pagenumStatusDetails) {
+                            pagenumStatusBox.style.display = "block";
+                            pagenumStatusHeading.innerText = "Notice";
+                            pagenumStatusDetails.innerText = data.error || "Failed to process page numbers.";
+                        }
+                    }
+                } catch (e) {
+                    if (pagenumStatusBox && pagenumStatusHeading && pagenumStatusDetails) {
+                        pagenumStatusBox.style.display = "block";
+                        pagenumStatusHeading.innerText = "Status";
+                        pagenumStatusDetails.innerText = "Result: " + res;
+                    }
+                }
+            });
+        });
+    }
+
 });
