@@ -1,5 +1,47 @@
 #target illustrator
 
+// Safe JSON parser/serializer for ExtendScript (ES3)
+if (typeof JSON !== "object") {
+    JSON = {};
+}
+if (typeof JSON.stringify !== "function") {
+    JSON.stringify = function(obj) {
+        if (obj === null) return "null";
+        if (typeof obj === "undefined") return "undefined";
+        if (typeof obj === "number" || typeof obj === "boolean") return String(obj);
+        if (typeof obj === "string") {
+            return '"' + obj.replace(/\\/g, '\\\\')
+                            .replace(/"/g, '\\"')
+                            .replace(/\r/g, '\\r')
+                            .replace(/\n/g, '\\n')
+                            .replace(/\t/g, '\\t') + '"';
+        }
+        if (obj instanceof Array) {
+            var a = [];
+            for (var i = 0; i < obj.length; i++) {
+                a.push(JSON.stringify(obj[i]));
+            }
+            return "[" + a.join(",") + "]";
+        }
+        if (typeof obj === "object") {
+            var o = [];
+            for (var k in obj) {
+                if (obj.hasOwnProperty(k)) {
+                    o.push(JSON.stringify(k) + ":" + JSON.stringify(obj[k]));
+                }
+            }
+            return "{" + o.join(",") + "}";
+        }
+        return String(obj);
+    };
+}
+if (typeof JSON.parse !== "function") {
+    JSON.parse = function(str) {
+        if (!str) return null;
+        return eval('(' + str + ')');
+    };
+}
+
 var Bijoy2UnicodeEngine = (function () {
     var rawMapV1 = {
         "0": "\u09E6",
@@ -1419,9 +1461,15 @@ var VectorToolkitHost = {
         if (doc.selection && doc.selection.length > 0) {
             selItemsCount = doc.selection.length;
             try {
-                sampleWidth = Math.abs(doc.selection[0].width);
-                sampleHeight = Math.abs(doc.selection[0].height);
-            } catch (e) {}
+                var effDim = this._getEffectiveDimensions(doc.selection[0]);
+                sampleWidth = effDim.width;
+                sampleHeight = effDim.height;
+            } catch (e) {
+                try {
+                    sampleWidth = Math.abs(doc.selection[0].width);
+                    sampleHeight = Math.abs(doc.selection[0].height);
+                } catch (e2) {}
+            }
 
             function countInItems(items) {
                 for (var i = 0; i < items.length; i++) {
@@ -1619,8 +1667,9 @@ var VectorToolkitHost = {
         if (params.scope === "selected" && doc.selection) {
             for (var s = 0; s < doc.selection.length; s++) targetsToRasterize.push(doc.selection[s]);
         } else if (params.scope === "sample" && doc.selection && doc.selection.length > 0) {
-            var sampleW = Math.abs(doc.selection[0].width);
-            var sampleH = Math.abs(doc.selection[0].height);
+            var sampleDim = this._getEffectiveDimensions(doc.selection[0]);
+            var sampleW = sampleDim.width;
+            var sampleH = sampleDim.height;
             targetsToRasterize = this._findMatchingDesigns(doc, sampleW, sampleH);
         } else {
             for (var g = 0; g < doc.groupItems.length; g++) targetsToRasterize.push(doc.groupItems[g]);
@@ -1631,7 +1680,8 @@ var VectorToolkitHost = {
         var rastOptions = new RasterizeOptions();
         var ppiVal = parseFloat(params.ppi) || 300;
         rastOptions.resolution = ppiVal;
-        rastOptions.transparency = params.transparent;
+        rastOptions.transparency = (params.transparent !== false);
+        rastOptions.padding = 0;
 
         if (params.colorModel === "RGB") rastOptions.colorModel = RasterizationColorModel.DEFAULTCOLORMODEL;
         else if (params.colorModel === "Grayscale") rastOptions.colorModel = RasterizationColorModel.GRAYSCALE;
@@ -1645,10 +1695,21 @@ var VectorToolkitHost = {
         for (var i = targetsToRasterize.length - 1; i >= 0; i--) {
             var itm = targetsToRasterize[i];
             try {
-                var b = itm.geometricBounds;
-                doc.rasterize(itm, b, rastOptions);
+                this._unlockArt(itm);
+                var safeClipBounds = this._getStrictArtworkBounds(itm);
+                if (safeClipBounds) {
+                    doc.rasterize(itm, safeClipBounds, rastOptions);
+                } else {
+                    doc.rasterize(itm, undefined, rastOptions);
+                }
                 rasterizedCount++;
-            } catch (e) {}
+            } catch (e) {
+                try {
+                    doc.selection = [itm];
+                    doc.rasterize(itm, undefined, rastOptions);
+                    rasterizedCount++;
+                } catch (e2) {}
+            }
         }
 
         app.redraw();
@@ -1920,20 +1981,63 @@ var VectorToolkitHost = {
         var ignoredCount = 0;
         var frequency = {};
 
-        for (var i = 0; i < sel.length; i++) {
-            var item = sel[i];
-            if (item.typename === "TextFrame") {
-                var textContent = String(item.contents);
-                var cleaned = textContent.replace(/[^0-9.]/g, "");
-                if (cleaned === "") continue;
+        // Helper to normalize Bengali, Arabic, and Persian digits to standard ASCII digits 0-9
+        function normalizeDigits(str) {
+            if (!str) return "";
+            var bnDigits = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+            var arDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+            var faDigits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+            var res = String(str);
+            for (var d = 0; d < 10; d++) {
+                res = res.split(bnDigits[d]).join(String(d));
+                res = res.split(arDigits[d]).join(String(d));
+                res = res.split(faDigits[d]).join(String(d));
+            }
+            return res;
+        }
 
-                var val = parseFloat(cleaned);
+        // Helper to recursively collect all TextFrames from selection (including inside GroupItems)
+        var textFrames = [];
+        function extractTextFrames(items) {
+            if (!items) return;
+            for (var j = 0; j < items.length; j++) {
+                var itm = items[j];
+                if (itm.typename === "TextFrame") {
+                    textFrames.push(itm);
+                } else if (itm.typename === "GroupItem") {
+                    extractTextFrames(itm.pageItems);
+                }
+            }
+        }
+        extractTextFrames(sel);
+
+        if (textFrames.length === 0) {
+            return JSON.stringify({
+                success: false,
+                message: "No text frames found in selection."
+            });
+        }
+
+        for (var i = 0; i < textFrames.length; i++) {
+            var item = textFrames[i];
+            var rawText = "";
+            try { rawText = String(item.contents); } catch(e) { rawText = ""; }
+            if (!rawText) continue;
+
+            var normalized = normalizeDigits(rawText);
+            // Match all numeric values (integer or decimal)
+            var numbers = normalized.match(/\d+(?:\.\d+)?/g);
+            if (!numbers || numbers.length === 0) continue;
+
+            for (var n = 0; n < numbers.length; n++) {
+                var val = parseFloat(numbers[n]);
                 if (!isNaN(val)) {
                     if (val > 0 && val <= limit) {
                         totalSum += val;
                         count++;
-                        if (frequency[val] === undefined) frequency[val] = 0;
-                        frequency[val]++;
+                        var key = String(val);
+                        if (frequency[key] === undefined) frequency[key] = 0;
+                        frequency[key]++;
                     } else {
                         ignoredCount++;
                     }
@@ -1944,7 +2048,7 @@ var VectorToolkitHost = {
         if (count === 0) {
             return JSON.stringify({
                 success: false,
-                message: "No numbers (1 to " + limit + ") were found in selection."
+                message: "No numbers (1 to " + limit + ") were found in selection." + (ignoredCount > 0 ? " (Ignored " + ignoredCount + " numbers > " + limit + ")" : "")
             });
         }
 
@@ -1994,18 +2098,109 @@ var VectorToolkitHost = {
         return 999999;
     },
 
+    _getStrictArtworkBounds: function (art) {
+        if (!art) return null;
+        var b = null;
+        try {
+            if (art.typename === "GroupItem") {
+                if (art.clipped) {
+                    for (var k = 0; k < art.pageItems.length; k++) {
+                        var p = art.pageItems[k];
+                        if (p.clipping) {
+                            b = p.geometricBounds;
+                            break;
+                        }
+                    }
+                    if (!b && art.pageItems.length > 0) {
+                        b = art.pageItems[0].geometricBounds;
+                    }
+                } else {
+                    for (var j = 0; j < art.pageItems.length; j++) {
+                        var child = art.pageItems[j];
+                        if (child.clipping) {
+                            b = child.geometricBounds;
+                            break;
+                        }
+                        if (child.typename === "GroupItem" && child.clipped) {
+                            var subB = this._getStrictArtworkBounds(child);
+                            if (subB) {
+                                b = subB;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else if (art.clipping) {
+                b = art.geometricBounds;
+            }
+        } catch (eClip) {}
+
+        if (!b) {
+            try { b = art.geometricBounds; } catch (eGB) {}
+        }
+        if (!b) {
+            try { b = art.visibleBounds; } catch (eVB) {}
+        }
+
+        if (b && b.length === 4) {
+            var l = Math.min(b[0], b[2]);
+            var r = Math.max(b[0], b[2]);
+            var t = Math.max(b[1], b[3]);
+            var bot = Math.min(b[1], b[3]);
+            if ((r - l) > 0.1 && (t - bot) > 0.1) {
+                return [l, t, r, bot];
+            }
+        }
+        return null;
+    },
+
+    _getEffectiveDimensions: function (item) {
+        if (!item) return { width: 0, height: 0 };
+        var b = this._getStrictArtworkBounds(item);
+        if (b && b.length === 4) {
+            return {
+                width: Math.abs(b[2] - b[0]),
+                height: Math.abs(b[1] - b[3])
+            };
+        }
+        try {
+            return {
+                width: Math.abs(item.width),
+                height: Math.abs(item.height)
+            };
+        } catch (e) {
+            return { width: 0, height: 0 };
+        }
+    },
+
+    _unlockArt: function (art) {
+        if (!art) return;
+        try { art.locked = false; } catch (e) {}
+        try { art.hidden = false; } catch (e) {}
+        if (art.typename === "GroupItem") {
+            try {
+                for (var u = 0; u < art.pageItems.length; u++) {
+                    this._unlockArt(art.pageItems[u]);
+                }
+            } catch (eG) {}
+        }
+    },
+
     _findMatchingDesigns: function (doc, sampleW, sampleH) {
         var results = [];
         if (!sampleW || !sampleH || sampleW <= 0 || sampleH <= 0) return results;
 
         var tolW = Math.max(sampleW * 0.12, 10);
         var tolH = Math.max(sampleH * 0.12, 10);
+        var self = this;
 
         function isSizeMatch(item) {
             try {
                 if (item.locked || item.hidden || item.guides) return false;
-                var w = Math.abs(item.width);
-                var h = Math.abs(item.height);
+                var dim = self._getEffectiveDimensions(item);
+                var w = dim.width;
+                var h = dim.height;
+                if (w <= 0 || h <= 0) return false;
                 return (Math.abs(w - sampleW) <= tolW && Math.abs(h - sampleH) <= tolH);
             } catch (e) {
                 return false;
