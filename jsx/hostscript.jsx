@@ -1696,7 +1696,7 @@ var VectorToolkitHost = {
             var itm = targetsToRasterize[i];
             try {
                 this._unlockArt(itm);
-                var safeClipBounds = this._getStrictArtworkBounds(itm);
+                var safeClipBounds = this._getStrictArtworkBounds(itm, sampleW, sampleH);
                 if (safeClipBounds) {
                     doc.rasterize(itm, safeClipBounds, rastOptions);
                 } else {
@@ -2098,11 +2098,12 @@ var VectorToolkitHost = {
         return 999999;
     },
 
-    _getStrictArtworkBounds: function (art) {
+    _getStrictArtworkBounds: function (art, sampleW, sampleH) {
         if (!art) return null;
         var b = null;
         try {
             if (art.typename === "GroupItem") {
+                // 1. Direct clipping mask
                 if (art.clipped) {
                     for (var k = 0; k < art.pageItems.length; k++) {
                         var p = art.pageItems[k];
@@ -2114,17 +2115,49 @@ var VectorToolkitHost = {
                     if (!b && art.pageItems.length > 0) {
                         b = art.pageItems[0].geometricBounds;
                     }
-                } else {
-                    for (var j = 0; j < art.pageItems.length; j++) {
-                        var child = art.pageItems[j];
-                        if (child.clipping) {
-                            b = child.geometricBounds;
-                            break;
+                }
+
+                // 2. If not clipped or clipping mask not found, search from bottom to top
+                if (!b && art.pageItems.length > 0) {
+                    // 2a. If sample dimensions provided, find matching child item
+                    if (sampleW && sampleH && sampleW > 0 && sampleH > 0) {
+                        var tolW = Math.max(sampleW * 0.15, 8);
+                        var tolH = Math.max(sampleH * 0.15, 8);
+                        for (var i = art.pageItems.length - 1; i >= 0; i--) {
+                            var item = art.pageItems[i];
+                            var iw = Math.abs(item.width);
+                            var ih = Math.abs(item.height);
+                            if (Math.abs(iw - sampleW) <= tolW && Math.abs(ih - sampleH) <= tolH) {
+                                if (item.typename === "GroupItem" && item.clipped) {
+                                    b = this._getStrictArtworkBounds(item, sampleW, sampleH);
+                                } else {
+                                    b = item.geometricBounds;
+                                }
+                                if (b) break;
+                            }
                         }
-                        if (child.typename === "GroupItem" && child.clipped) {
-                            var subB = this._getStrictArtworkBounds(child);
-                            if (subB) {
-                                b = subB;
+                    }
+
+                    // 2b. Check bottom items for base background PathItem / RasterItem
+                    if (!b) {
+                        for (var j = art.pageItems.length - 1; j >= 0; j--) {
+                            var child = art.pageItems[j];
+                            if (child.typename === "PathItem" || child.typename === "RasterItem") {
+                                var cw = Math.abs(child.width) * 0.352778;
+                                var ch = Math.abs(child.height) * 0.352778;
+                                if (cw > 30 && ch > 20) {
+                                    b = child.geometricBounds;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // 2c. Check if any child has clipping === true
+                    if (!b) {
+                        for (var c = 0; c < art.pageItems.length; c++) {
+                            if (art.pageItems[c].clipping) {
+                                b = art.pageItems[c].geometricBounds;
                                 break;
                             }
                         }
@@ -2154,9 +2187,9 @@ var VectorToolkitHost = {
         return null;
     },
 
-    _getEffectiveDimensions: function (item) {
+    _getEffectiveDimensions: function (item, sampleW, sampleH) {
         if (!item) return { width: 0, height: 0 };
-        var b = this._getStrictArtworkBounds(item);
+        var b = this._getStrictArtworkBounds(item, sampleW, sampleH);
         if (b && b.length === 4) {
             return {
                 width: Math.abs(b[2] - b[0]),
@@ -2190,14 +2223,14 @@ var VectorToolkitHost = {
         var results = [];
         if (!sampleW || !sampleH || sampleW <= 0 || sampleH <= 0) return results;
 
-        var tolW = Math.max(sampleW * 0.12, 10);
-        var tolH = Math.max(sampleH * 0.12, 10);
+        var tolW = Math.max(sampleW * 0.15, 10);
+        var tolH = Math.max(sampleH * 0.15, 10);
         var self = this;
 
         function isSizeMatch(item) {
             try {
                 if (item.locked || item.hidden || item.guides) return false;
-                var dim = self._getEffectiveDimensions(item);
+                var dim = self._getEffectiveDimensions(item, sampleW, sampleH);
                 var w = dim.width;
                 var h = dim.height;
                 if (w <= 0 || h <= 0) return false;
