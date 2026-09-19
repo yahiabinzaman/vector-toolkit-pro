@@ -166,14 +166,24 @@ document.addEventListener("DOMContentLoaded", function () {
                     var mmW = (s.sampleWidth * 0.352778).toFixed(1);
                     var mmH = (s.sampleHeight * 0.352778).toFixed(1);
                     lblRastSample.textContent = "Match Selected Sample Size (" + mmW + " x " + mmH + " mm) [" + s.matchedSampleCount + " designs found]";
+                    var wasDisabled = rbRastSample.disabled;
                     rbRastSample.disabled = false;
+                    if (wasDisabled && rbRastAll.checked) {
+                        rbRastSample.checked = true;
+                    }
                 } else {
                     lblRastSample.textContent = "Match Selected Sample Size (Select 1 design sample first)";
                     rbRastSample.disabled = true;
+                    if (rbRastSample.checked) {
+                        rbRastAll.checked = true;
+                    }
                 }
                 lblRastSel.textContent = "Each Selected Group / Object Individually (" + s.selItemsCount + " selected)";
                 lblRastAll.textContent = "All Top-Level Groups in Document (" + s.totalGroups + " groups)";
                 rbRastSel.disabled = (s.selItemsCount === 0);
+                if (rbRastSel.disabled && rbRastSel.checked) {
+                    rbRastAll.checked = true;
+                }
 
             } catch (e) {}
         });
@@ -555,7 +565,17 @@ document.addEventListener("DOMContentLoaded", function () {
     refreshStats();
     window.addEventListener("focus", refreshStats);
     document.addEventListener("mouseenter", refreshStats);
-    setInterval(refreshStats, 2500);
+    document.addEventListener("mousemove", (function() {
+        var last = 0;
+        return function() {
+            var now = Date.now();
+            if (now - last > 800) {
+                last = now;
+                refreshStats();
+            }
+        };
+    })());
+    setInterval(refreshStats, 1000);
 
     // ==========================================
     // TAB 8: BIJOY TO UNICODE BANGLA BOOK CONVERTER
