@@ -823,4 +823,140 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // ==========================================
+    // TAB 10: CARD SERIAL AUTO-FILLER (01-02, 03-04...)
+    // ==========================================
+    function getCardSerialConfig() {
+        var scopeElem = document.querySelector('input[name="cardserial-scope"]:checked');
+        var orderElem = document.querySelector('input[name="cardserial-order"]:checked');
+        var txtStart = document.getElementById("cardserial-start");
+        var selPadding = document.getElementById("cardserial-padding");
+        var selDigitLang = document.getElementById("cardserial-digit-lang");
+        var txtPrefix = document.getElementById("cardserial-prefix");
+        var txtSuffix = document.getElementById("cardserial-suffix");
+        var txtPlaceholder = document.getElementById("cardserial-placeholder");
+
+        return {
+            scope: scopeElem ? scopeElem.value : "all_artboards",
+            order: orderElem ? orderElem.value : "row",
+            startNum: txtStart ? (txtStart.value || "1") : "1",
+            padding: selPadding ? (selPadding.value || "2") : "2",
+            digitLang: selDigitLang ? (selDigitLang.value || "auto") : "auto",
+            prefix: txtPrefix ? txtPrefix.value : "",
+            suffix: txtSuffix ? txtSuffix.value : "",
+            placeholder: txtPlaceholder ? txtPlaceholder.value.trim() : "00"
+        };
+    }
+
+    var btnCardSerialScan = document.getElementById("btn-cardserial-scan");
+    var btnCardSerialApply = document.getElementById("btn-cardserial-apply");
+    var csStatusBox = document.getElementById("cardserial-status-box");
+    var csStatusHeading = document.getElementById("cardserial-status-heading");
+    var csStatusDetails = document.getElementById("cardserial-status-details");
+
+    if (btnCardSerialScan) {
+        btnCardSerialScan.addEventListener("click", function () {
+            var cfg = getCardSerialConfig();
+            btnCardSerialScan.disabled = true;
+            btnCardSerialScan.innerText = "Scanning Cards...";
+            if (csStatusBox) csStatusBox.style.display = "none";
+
+            csInterface.evalScript("VectorToolkitHost.scanCardSerials(" + JSON.stringify(JSON.stringify(cfg)) + ")", function (res) {
+                btnCardSerialScan.disabled = false;
+                btnCardSerialScan.innerText = "🔍 Scan & Preview Cards";
+
+                try {
+                    var data = JSON.parse(res);
+                    if (data.success) {
+                        if (csStatusBox && csStatusHeading && csStatusDetails) {
+                            csStatusBox.style.display = "block";
+                            csStatusBox.style.borderColor = "#00b0ff";
+                            csStatusHeading.style.color = "#00e5ff";
+                            csStatusHeading.innerText = "✓ Found " + data.count + " Cards (" + data.artboardsCount + " Artboards)";
+
+                            var previewHtml = "<strong>Number Range:</strong> " + data.range + "<br>" +
+                                "<strong>Sequence Order:</strong> " + (cfg.order === "row" ? "Row-by-Row (01-02, 03-04...)" : "Column-by-Column") + "<br>" +
+                                "<div style='margin-top: 6px; max-height: 120px; overflow-y: auto; background: rgba(0,0,0,0.25); padding: 5px; border-radius: 3px;'>";
+
+                            if (data.preview && data.preview.length > 0) {
+                                for (var p = 0; p < data.preview.length; p++) {
+                                    var item = data.preview[p];
+                                    previewHtml += "<div style='margin-bottom: 2px; font-family: monospace; font-size: 10px;'>" +
+                                        "Card #" + item.index + " [AB " + item.artboard + "]: '" + (item.currentVal || "empty") + "' ➔ <strong style='color:#00e676;'>" + item.newVal + "</strong></div>";
+                                }
+                                if (data.count > data.preview.length) {
+                                    previewHtml += "<div style='color: #888; font-style: italic;'>... and " + (data.count - data.preview.length) + " more cards</div>";
+                                }
+                            }
+                            previewHtml += "</div>";
+                            csStatusDetails.innerHTML = previewHtml;
+                        }
+                        showToast("Detected " + data.count + " cards across " + data.artboardsCount + " artboards!", "success");
+                    } else {
+                        if (csStatusBox && csStatusHeading && csStatusDetails) {
+                            csStatusBox.style.display = "block";
+                            csStatusBox.style.borderColor = "#ff5252";
+                            csStatusHeading.style.color = "#ff5252";
+                            csStatusHeading.innerText = "Scan Warning";
+                            csStatusDetails.innerText = data.error || "No cards detected.";
+                        }
+                        showToast(data.error || "No cards detected.", "error");
+                    }
+                } catch (e) {
+                    if (csStatusBox && csStatusHeading && csStatusDetails) {
+                        csStatusBox.style.display = "block";
+                        csStatusHeading.innerText = "Status";
+                        csStatusDetails.innerText = "Response: " + res;
+                    }
+                }
+            });
+        });
+    }
+
+    if (btnCardSerialApply) {
+        btnCardSerialApply.addEventListener("click", function () {
+            var cfg = getCardSerialConfig();
+            btnCardSerialApply.disabled = true;
+            btnCardSerialApply.innerText = "Applying Card Serials...";
+            if (csStatusBox) csStatusBox.style.display = "none";
+
+            csInterface.evalScript("VectorToolkitHost.executeCardSerial(" + JSON.stringify(JSON.stringify(cfg)) + ")", function (res) {
+                btnCardSerialApply.disabled = false;
+                btnCardSerialApply.innerText = "⚡ Apply Auto Serial (01, 02, 03...)";
+
+                try {
+                    var data = JSON.parse(res);
+                    if (data.success) {
+                        if (csStatusBox && csStatusHeading && csStatusDetails) {
+                            csStatusBox.style.display = "block";
+                            csStatusBox.style.borderColor = "#00e676";
+                            csStatusHeading.style.color = "#00e676";
+                            csStatusHeading.innerText = "✓ Serial Numbers Applied Successfully!";
+                            csStatusDetails.innerHTML = "<strong>Updated:</strong> " + data.count + " of " + data.total + " Cards<br>" +
+                                "<strong>Number Range:</strong> " + data.range + "<br>" +
+                                "<strong>Grid Order:</strong> " + (cfg.order === "row" ? "01 - 02, 03 - 04 (Horizontal Grid)" : "01 - 04, 02 - 05 (Vertical Columns)") + "<br>" +
+                                "<strong style='color: #81c784;'>Thanks to Legend Yahia Bin Zaman</strong>";
+                        }
+                        showToast("Successfully numbered " + data.count + " cards (" + data.range + ")!", "success");
+                    } else {
+                        if (csStatusBox && csStatusHeading && csStatusDetails) {
+                            csStatusBox.style.display = "block";
+                            csStatusBox.style.borderColor = "#ff5252";
+                            csStatusHeading.style.color = "#ff5252";
+                            csStatusHeading.innerText = "Notice";
+                            csStatusDetails.innerText = data.error || "Could not apply card serials.";
+                        }
+                        showToast(data.error || "Could not apply card serials.", "error");
+                    }
+                } catch (e) {
+                    if (csStatusBox && csStatusHeading && csStatusDetails) {
+                        csStatusBox.style.display = "block";
+                        csStatusHeading.innerText = "Status";
+                        csStatusDetails.innerText = "Result: " + res;
+                    }
+                }
+            });
+        });
+    }
+
 });

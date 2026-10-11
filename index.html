@@ -35,6 +35,9 @@
             <button class="tab-button" data-tab="page-bijoy" style="background: rgba(0, 229, 255, 0.12); border: 1px solid #00b4d8; color: #00e5ff;">Bijoy Unicode</button>
             <button class="tab-button" data-tab="page-pagenum" style="background: rgba(255, 140, 0, 0.12); border: 1px solid #ff8c00; color: #ff9e00;">Page Numbers</button>
         </div>
+        <div class="nav-row">
+            <button class="tab-button" data-tab="page-cardserial" style="background: linear-gradient(135deg, rgba(0, 230, 118, 0.18), rgba(0, 180, 216, 0.18)); border: 1px solid #00e676; color: #00e676; font-weight: 700; width: 100%; padding: 6px 4px;">Card Serial Auto-Filler (01 - 02, 03 - 04...)</button>
+        </div>
     </nav>
 
     <!-- TAB 1: RELINK EMBEDDED RASTERS -->
@@ -545,6 +548,112 @@
             <div id="pagenum-status-box" style="display: none; margin-top: 10px; background: #222222; border: 1px solid #383838; border-radius: 3px; padding: 8px 10px; font-size: 10.5px; color: #b8b8b8;">
                 <div style="font-weight: 600; color: #00e5ff; margin-bottom: 4px;" id="pagenum-status-heading">Page Numbering Complete</div>
                 <div id="pagenum-status-details" style="color: #8f8f8f; line-height: 1.45;">Thanks to Legend Yahia Bin Zaman</div>
+            </div>
+        </fieldset>
+    </main>
+
+    <!-- TAB 10: SMART CARD SERIAL NUMBER AUTO-FILLER (01-02, 03-04...) -->
+    <main id="page-cardserial" class="tab-page">
+        <fieldset class="panel-box">
+            <legend>Card Serial Auto-Filler (কার্ড সিরিয়াল অটোমেশন)</legend>
+            <p class="panel-desc">কার্ডের নিচের <strong style="color: #00e676;">00</strong> বা <strong style="color: #00e676;">০০</strong> অটোমেটিক শনাক্ত করে গ্রিড অনুযায়ী সিরিয়াল ফিল করবে (01-02, 03-04...):</p>
+
+            <!-- Target Scope Selection -->
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Target Scope (টার্গেট পরিধি):</legend>
+                <div class="row">
+                    <label class="radio-label" style="margin-right: 10px;">
+                        <input type="radio" name="cardserial-scope" value="all_artboards" checked id="rb-cardserial-all">
+                        <span>All Artboards (সব আর্টবোর্ড)</span>
+                    </label>
+                    <label class="radio-label" style="margin-right: 10px;">
+                        <input type="radio" name="cardserial-scope" value="artboard" id="rb-cardserial-ab">
+                        <span>Active Artboard</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="cardserial-scope" value="selection" id="rb-cardserial-sel">
+                        <span>Selected Only</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <!-- Number Sequence & Format -->
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Number Format & Sequence (সিরিয়াল ফরম্যাট):</legend>
+                <div class="row" style="margin-bottom: 6px;">
+                    <div style="flex: 1; display: flex; align-items: center; gap: 5px;">
+                        <span style="font-size: 10.5px; color: #ccc;">Start At:</span>
+                        <input type="number" id="cardserial-start" value="1" min="0" style="width: 50px; text-align: center; padding: 4px; background: #262626; border: 1px solid #444; color: #fff; border-radius: 3px;">
+                    </div>
+                    <div style="flex: 1.5; display: flex; align-items: center; gap: 5px;">
+                        <span style="font-size: 10.5px; color: #ccc;">Padding:</span>
+                        <select id="cardserial-padding" style="flex: 1; padding: 4px; background: #262626; border: 1px solid #444; color: #fff; border-radius: 3px; font-size: 10.5px;">
+                            <option value="2" selected>01, 02, 03... (2 Digits)</option>
+                            <option value="1">1, 2, 3... (No Padding)</option>
+                            <option value="3">001, 002, 003... (3 Digits)</option>
+                            <option value="4">0001, 0002... (4 Digits)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-bottom: 6px;">
+                    <div style="flex: 1; display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 10.5px; color: #ccc;">Digits:</span>
+                        <select id="cardserial-digit-lang" style="flex: 1; padding: 4px; background: #262626; border: 1px solid #444; color: #fff; border-radius: 3px; font-size: 10.5px;">
+                            <option value="auto" selected>Auto-Detect (বাংলা/English)</option>
+                            <option value="en">English (01, 02, 03...)</option>
+                            <option value="bn">বাংলা (০১, ০২, ০৩...)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div style="flex: 1; display: flex; align-items: center; gap: 4px;">
+                        <span style="font-size: 10.5px; color: #aaa;">Prefix:</span>
+                        <input type="text" id="cardserial-prefix" placeholder="None" style="width: 45px; padding: 4px; background: #262626; border: 1px solid #444; color: #fff; border-radius: 3px;">
+                    </div>
+                    <div style="flex: 1; display: flex; align-items: center; gap: 4px;">
+                        <span style="font-size: 10.5px; color: #aaa;">Suffix:</span>
+                        <input type="text" id="cardserial-suffix" placeholder="None" style="width: 45px; padding: 4px; background: #262626; border: 1px solid #444; color: #fff; border-radius: 3px;">
+                    </div>
+                    <div style="flex: 1.2; display: flex; align-items: center; gap: 4px;">
+                        <span style="font-size: 10.5px; color: #aaa;">Target:</span>
+                        <input type="text" id="cardserial-placeholder" value="00" placeholder="00" style="width: 40px; text-align: center; padding: 4px; background: #262626; border: 1px solid #444; color: #00e676; border-radius: 3px; font-weight: bold;">
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Fill Sequence / Direction -->
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Fill Sequence / Direction (সিরিয়াল ক্রম):</legend>
+                <div class="row" style="margin-bottom: 4px;">
+                    <label class="radio-label" style="margin-right: 15px; font-weight: 600; color: #00e676;">
+                        <input type="radio" name="cardserial-order" value="row" checked id="rb-cardserial-order-row">
+                        <span>Row-by-Row (01-02, 03-04...) [আড়াআড়ি]</span>
+                    </label>
+                </div>
+                <div class="row">
+                    <label class="radio-label" style="color: #bbb;">
+                        <input type="radio" name="cardserial-order" value="column" id="rb-cardserial-order-col">
+                        <span>Column-by-Column (01-04, 02-05...) [লম্বালম্বি]</span>
+                    </label>
+                </div>
+                <div style="font-size: 10px; color: #888; margin-top: 4px; line-height: 1.3;">
+                    Row-by-Row মোডে বামের কার্ড পাবে 01, ডানের কার্ড পাবে 02, নিচের সারিতে 03, 04...
+                </div>
+            </fieldset>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                <button type="button" class="btn-token" id="btn-cardserial-scan" style="flex: 1; padding: 7px 6px; font-size: 11px; background: #283038; color: #00b0ff; border: 1px solid #0091ea; border-radius: 3px; cursor: pointer; font-weight: 600;">🔍 Scan & Preview Cards</button>
+            </div>
+
+            <button class="btn-action-main" id="btn-cardserial-apply" style="background: linear-gradient(135deg, #00c853, #0091ea); color: #ffffff; font-weight: 700; font-size: 12px; padding: 10px; border: none; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.4); box-shadow: 0 2px 8px rgba(0, 200, 83, 0.3);">⚡ Apply Auto Serial (01, 02, 03...)</button>
+
+            <!-- Status Box -->
+            <div id="cardserial-status-box" style="display: none; margin-top: 10px; background: #1c2420; border: 1px solid #00c853; border-radius: 3px; padding: 8px 10px; font-size: 10.5px; color: #d0f8ce;">
+                <div style="font-weight: 600; color: #00e676; margin-bottom: 4px;" id="cardserial-status-heading">Status</div>
+                <div id="cardserial-status-details" style="color: #a8dfaf; line-height: 1.45;"></div>
             </div>
         </fieldset>
     </main>

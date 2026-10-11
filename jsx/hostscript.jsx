@@ -2861,6 +2861,507 @@ var VectorToolkitHost = {
             if (b[3] < minY) minY = b[3];
         }
         return [minX, maxY, maxX, minY];
+    },
+
+    // ========================================================
+    // TAB 10: SMART CARD SERIAL NUMBER AUTO-FILLER ENGINE
+    // ========================================================
+    _isItemSafeAndVisible: function (item) {
+        if (!item) return false;
+        try {
+            if (item.hidden || item.locked) return false;
+            var p = item.parent;
+            while (p && p.typename !== "Document") {
+                if (p.hidden || p.locked) return false;
+                p = p.parent;
+            }
+            return true;
+        } catch (e) {
+            return false;
+        }
+    },
+
+    _testSerialTextFrame: function (tf, placeholder) {
+        if (!tf || tf.typename !== "TextFrame") return false;
+        var txt = "";
+        try {
+            txt = tf.contents ? tf.contents.replace(/^\s+|\s+$/g, "") : "";
+        } catch (e) {
+            return false;
+        }
+        if (!txt) return false;
+
+        // Custom or direct match
+        if (placeholder && placeholder.length > 0) {
+            if (txt === placeholder) return true;
+            if (placeholder === "00" && (txt === "00" || txt === "\u09E6\u09E6")) return true;
+            if (placeholder === "\u09E6\u09E6" && (txt === "00" || txt === "\u09E6\u09E6")) return true;
+        }
+
+        // Must NOT be multiline or long text
+        if (txt.indexOf("\r") !== -1 || txt.indexOf("\n") !== -1) return false;
+        try {
+            if (tf.lines && tf.lines.length > 1) return false;
+        } catch (le) {}
+
+        // Phone numbers (>= 7 digits) reject
+        if (txt.replace(/\D/g, "").length >= 7) return false;
+        if (txt.replace(/[^০-৯]/g, "").length >= 7) return false;
+
+        // Years (e.g. 2026, 2027, 1447, ২০২৬) reject
+        if (/^(?:19|20)\d\d$/.test(txt) || /^(?:১৪|১৫)[০-৯]{2}$/.test(txt) || /^(?:২০|১৯)[০-৯]{2}$/.test(txt)) return false;
+
+        // Bengali labels reject
+        if (/(?:মোবাইল|পিতা|গ্রাম|গ্রেড|রোল|নাম|ঠিকানা|বিভাগ|হিফয|কুরআন)/i.test(txt)) return false;
+
+        // Placeholder matching "00", "০০", single/triple zeros, or 1-3 digits
+        if (/^(?:00|\u09E6\u09E6|0|\u09E6|000|\u09E6\u09E6\u09E6|#|\u09A8\u0982|sl)$/i.test(txt)) return true;
+        if (/^[০-৯0-9]{1,3}$/.test(txt)) return true;
+
+        return false;
+    },
+
+    _collectAllSubTextFrames: function (item, outArr) {
+        if (!item || !this._isItemSafeAndVisible(item)) return;
+        if (item.typename === "TextFrame") {
+            outArr.push(item);
+            return;
+        }
+        if (item.typename === "GroupItem" || item.pageItems) {
+            for (var i = 0; i < item.pageItems.length; i++) {
+                this._collectAllSubTextFrames(item.pageItems[i], outArr);
+            }
+        }
+    },
+
+    _detectCardSerialsInternal: function (config) {
+        if (app.documents.length === 0) return { error: "No active document found in Illustrator." };
+        var doc = app.activeDocument;
+        var numABs = doc.artboards.length;
+        var activeABIdx = doc.artboards.getActiveArtboardIndex();
+
+        var scope = config.scope || "all_artboards";
+        var order = config.order || "row";
+        var placeholder = config.placeholder || "00";
+        var startNum = parseInt(config.startNum, 10);
+        if (isNaN(startNum)) startNum = 1;
+        var padDigits = parseInt(config.padding, 10);
+        if (isNaN(padDigits)) padDigits = 2;
+        var digitLang = config.digitLang || "auto";
+        var prefix = config.prefix || "";
+        var suffix = config.suffix || "";
+
+        var abFilter = null;
+        if (scope === "artboard") {
+            abFilter = activeABIdx;
+        }
+
+        function getArtboardIndexForBounds(gb) {
+            if (!gb || numABs === 0) return 0;
+            var midX = (gb[0] + gb[2]) / 2;
+            var midY = (gb[1] + gb[3]) / 2;
+            for (var a = 0; a < numABs; a++) {
+                var r = doc.artboards[a].artboardRect;
+                if (midX >= r[0] && midX <= r[2] && midY <= r[1] && midY >= r[3]) {
+                    return a;
+                }
+            }
+            return 0;
+        }
+
+        var detectedUnits = [];
+        var attachedTFSet = {};
+
+        // 1. If Selection scope
+        if (scope === "selection") {
+            var sel = doc.selection;
+            if (!sel || sel.length === 0) {
+                return { error: "Please select cards or text frames first, or choose 'All Artboards'." };
+            }
+
+            for (var s = 0; s < sel.length; s++) {
+                var sItem = sel[s];
+                if (!this._isItemSafeAndVisible(sItem)) continue;
+
+                if (sItem.typename === "GroupItem") {
+                    var gTfs = [];
+                    this._collectAllSubTextFrames(sItem, gTfs);
+                    var bestTF = null, bestScore = -1;
+                    var gBounds = sItem.geometricBounds;
+                    var gW = Math.abs(gBounds[2] - gBounds[0]);
+                    var gH = Math.abs(gBounds[1] - gBounds[3]);
+
+                    for (var t = 0; t < gTfs.length; t++) {
+                        var tf = gTfs[t];
+                        if (this._testSerialTextFrame(tf, placeholder)) {
+                            var ttxt = tf.contents.replace(/^\s+|\s+$/g, "");
+                            var sc = 10;
+                            if (ttxt === placeholder || ttxt === "00" || ttxt === "\u09E6\u09E6") sc += 50;
+                            var tfgb = tf.geometricBounds;
+                            var relX = (tfgb[0] - gBounds[0]) / Math.max(1, gW);
+                            var relY = (gBounds[1] - tfgb[1]) / Math.max(1, gH);
+                            if (relX > 0.4) sc += 20;
+                            if (relY > 0.4) sc += 20;
+                            if (sc > bestScore) {
+                                bestScore = sc;
+                                bestTF = tf;
+                            }
+                        }
+                    }
+                    if (bestTF) {
+                        detectedUnits.push({
+                            cardItem: sItem,
+                            textFrame: bestTF,
+                            bounds: sItem.geometricBounds,
+                            artboardIndex: getArtboardIndexForBounds(sItem.geometricBounds)
+                        });
+                        attachedTFSet[bestTF] = true;
+                    }
+                } else if (sItem.typename === "TextFrame") {
+                    if (this._testSerialTextFrame(sItem, placeholder)) {
+                        detectedUnits.push({
+                            cardItem: sItem,
+                            textFrame: sItem,
+                            bounds: sItem.geometricBounds,
+                            artboardIndex: getArtboardIndexForBounds(sItem.geometricBounds)
+                        });
+                        attachedTFSet[sItem] = true;
+                    }
+                }
+            }
+        } else {
+            // Document or Artboard scope:
+            // Pass A: Inspect groups on active layers
+            for (var l = 0; l < doc.layers.length; l++) {
+                var lyr = doc.layers[l];
+                if (!lyr.visible || lyr.locked) continue;
+
+                for (var p = 0; p < lyr.pageItems.length; p++) {
+                    var pItem = lyr.pageItems[p];
+                    if (!this._isItemSafeAndVisible(pItem)) continue;
+
+                    if (pItem.typename === "GroupItem") {
+                        var gb = pItem.geometricBounds;
+                        var w = Math.abs(gb[2] - gb[0]);
+                        var h = Math.abs(gb[1] - gb[3]);
+                        if (w > 650 && h > 650) continue;
+
+                        var itemAb = getArtboardIndexForBounds(gb);
+                        if (abFilter !== null && itemAb !== abFilter) continue;
+
+                        var gTfs = [];
+                        this._collectAllSubTextFrames(pItem, gTfs);
+                        if (gTfs.length === 0) continue;
+
+                        var bestTF = null, bestScore = -1;
+                        for (var t = 0; t < gTfs.length; t++) {
+                            var tf = gTfs[t];
+                            if (this._testSerialTextFrame(tf, placeholder)) {
+                                var ttxt = tf.contents.replace(/^\s+|\s+$/g, "");
+                                var sc = 10;
+                                if (ttxt === placeholder || ttxt === "00" || ttxt === "\u09E6\u09E6") sc += 50;
+                                var tfgb = tf.geometricBounds;
+                                var relX = (tfgb[0] - gb[0]) / Math.max(1, w);
+                                var relY = (gb[1] - tfgb[1]) / Math.max(1, h);
+                                if (relX > 0.4) sc += 20;
+                                if (relY > 0.4) sc += 20;
+                                if (sc > bestScore) {
+                                    bestScore = sc;
+                                    bestTF = tf;
+                                }
+                            }
+                        }
+
+                        if (bestTF) {
+                            detectedUnits.push({
+                                cardItem: pItem,
+                                textFrame: bestTF,
+                                bounds: gb,
+                                artboardIndex: itemAb
+                            });
+                            attachedTFSet[bestTF] = true;
+                        }
+                    }
+                }
+            }
+
+            // Pass B: Fallback for loose TextFrames or badges sitting outside groups
+            for (var dt = 0; dt < doc.textFrames.length; dt++) {
+                var dtf = doc.textFrames[dt];
+                if (!this._isItemSafeAndVisible(dtf)) continue;
+                if (attachedTFSet[dtf]) continue;
+
+                var dgb = dtf.geometricBounds;
+                var dw = Math.abs(dgb[2] - dgb[0]);
+                var dh = Math.abs(dgb[1] - dgb[3]);
+                if (dw > 85 || dh > 55) continue;
+
+                var dAb = getArtboardIndexForBounds(dgb);
+                if (abFilter !== null && dAb !== abFilter) continue;
+
+                if (this._testSerialTextFrame(dtf, placeholder)) {
+                    detectedUnits.push({
+                        cardItem: dtf,
+                        textFrame: dtf,
+                        bounds: dgb,
+                        artboardIndex: dAb
+                    });
+                    attachedTFSet[dtf] = true;
+                }
+            }
+        }
+
+        if (detectedUnits.length === 0) {
+            return {
+                error: "No card serial numbers or matching '00' / '০০' frames were found! Please check that cards are unlocked and visible."
+            };
+        }
+
+        // Cluster and Sort by Artboard:
+        var byAB = {};
+        for (var u = 0; u < detectedUnits.length; u++) {
+            var unit = detectedUnits[u];
+            var abId = unit.artboardIndex;
+            if (!byAB[abId]) byAB[abId] = [];
+            byAB[abId].push(unit);
+        }
+
+        var abListKeys = [];
+        for (var k in byAB) {
+            if (byAB.hasOwnProperty(k)) abListKeys.push(parseInt(k, 10));
+        }
+        abListKeys.sort(function(a, b) { return a - b; });
+
+        var finalSorted = [];
+
+        for (var ak = 0; ak < abListKeys.length; ak++) {
+            var currentABItems = byAB[abListKeys[ak]];
+            if (currentABItems.length === 0) continue;
+
+            for (var ci = 0; ci < currentABItems.length; ci++) {
+                var cItem = currentABItems[ci];
+                var cB = cItem.bounds;
+                cItem.centerX = (cB[0] + cB[2]) / 2;
+                cItem.centerY = (cB[1] + cB[3]) / 2;
+                cItem.width = Math.abs(cB[2] - cB[0]);
+                cItem.height = Math.abs(cB[1] - cB[3]);
+            }
+
+            if (order === "column") {
+                // Column by Column
+                var cols = [];
+                for (var ci = 0; ci < currentABItems.length; ci++) {
+                    var item = currentABItems[ci];
+                    var placed = false;
+                    for (var c = 0; c < cols.length; c++) {
+                        var col = cols[c];
+                        var xDiff = Math.abs(item.centerX - col.avgX);
+                        var colW = col.avgW || 100;
+                        if (xDiff < Math.max(35, colW * 0.45)) {
+                            col.items.push(item);
+                            var sumX = 0, sumW = 0;
+                            for (var m = 0; m < col.items.length; m++) {
+                                sumX += col.items[m].centerX;
+                                sumW += col.items[m].width;
+                            }
+                            col.avgX = sumX / col.items.length;
+                            col.avgW = sumW / col.items.length;
+                            placed = true;
+                            break;
+                        }
+                    }
+                    if (!placed) {
+                        cols.push({ avgX: item.centerX, avgW: item.width, items: [item] });
+                    }
+                }
+                cols.sort(function(a, b) { return a.avgX - b.avgX; });
+                for (var c = 0; c < cols.length; c++) {
+                    cols[c].items.sort(function(a, b) { return b.centerY - a.centerY; });
+                    for (var r = 0; r < cols[c].items.length; r++) {
+                        finalSorted.push(cols[c].items[r]);
+                    }
+                }
+            } else {
+                // Row-by-Row (Horizontal Grid: 01-02, 03-04...)
+                var rows = [];
+                for (var ci = 0; ci < currentABItems.length; ci++) {
+                    var item = currentABItems[ci];
+                    var placed = false;
+                    for (var r = 0; r < rows.length; r++) {
+                        var row = rows[r];
+                        var yDiff = Math.abs(item.centerY - row.avgY);
+                        var rowH = row.avgH || 60;
+                        if (yDiff < Math.max(30, rowH * 0.45)) {
+                            row.items.push(item);
+                            var sumY = 0, sumH = 0;
+                            for (var m = 0; m < row.items.length; m++) {
+                                sumY += row.items[m].centerY;
+                                sumH += row.items[m].height;
+                            }
+                            row.avgY = sumY / row.items.length;
+                            row.avgH = sumH / row.items.length;
+                            placed = true;
+                            break;
+                        }
+                    }
+                    if (!placed) {
+                        rows.push({ avgY: item.centerY, avgH: item.height, items: [item] });
+                    }
+                }
+                rows.sort(function(a, b) { return b.avgY - a.avgY; });
+                for (var r = 0; r < rows.length; r++) {
+                    rows[r].items.sort(function(a, b) { return a.centerX - b.centerX; });
+                    for (var c = 0; c < rows[r].items.length; c++) {
+                        finalSorted.push(rows[r].items[c]);
+                    }
+                }
+            }
+        }
+
+        var bnDigits = ['\u09E6', '\u09E7', '\u09E8', '\u09E9', '\u09EA', '\u09EB', '\u09EC', '\u09ED', '\u09EE', '\u09EF'];
+
+        function formatNumber(numVal, padLen, langMode, tf) {
+            var str = String(numVal);
+            while (str.length < padLen) {
+                str = "0" + str;
+            }
+
+            var fontName = "";
+            try {
+                if (tf && tf.textRange && tf.textRange.characterAttributes && tf.textRange.characterAttributes.textFont) {
+                    fontName = tf.textRange.characterAttributes.textFont.name || "";
+                }
+            } catch(fe) {}
+
+            var isSutonny = /sutonny/i.test(fontName);
+
+            var useBn = false;
+            if (langMode === "bn") {
+                useBn = true;
+            } else if (langMode === "en") {
+                useBn = false;
+            } else {
+                var cur = tf ? (tf.contents || "") : "";
+                if (/[\u09E6-\u09EF]/.test(cur) || /bornomala|kalpurush|solaiman|siyam/i.test(fontName)) {
+                    useBn = true;
+                } else {
+                    useBn = false;
+                }
+            }
+
+            if (isSutonny) {
+                return str;
+            }
+
+            if (useBn) {
+                var res = "";
+                for (var i = 0; i < str.length; i++) {
+                    var ch = str.charAt(i);
+                    if (ch >= '0' && ch <= '9') {
+                        res += bnDigits[parseInt(ch, 10)];
+                    } else {
+                        res += ch;
+                    }
+                }
+                return res;
+            }
+
+            return str;
+        }
+
+        return {
+            items: finalSorted,
+            startNum: startNum,
+            padDigits: padDigits,
+            digitLang: digitLang,
+            prefix: prefix,
+            suffix: suffix,
+            formatNumber: formatNumber,
+            artboardsCount: abListKeys.length
+        };
+    },
+
+    scanCardSerials: function (configJson) {
+        try {
+            var cfg = (typeof configJson === "string") ? eval("(" + configJson + ")") : (configJson || {});
+            var data = this._detectCardSerialsInternal(cfg);
+            if (data.error) {
+                return JSON.stringify({ success: false, error: data.error });
+            }
+
+            var items = data.items;
+            var previewList = [];
+            var maxPreview = Math.min(items.length, 12);
+
+            for (var i = 0; i < maxPreview; i++) {
+                var unit = items[i];
+                var curVal = unit.textFrame ? unit.textFrame.contents : "";
+                var targetVal = data.prefix + data.formatNumber(data.startNum + i, data.padDigits, data.digitLang, unit.textFrame) + data.suffix;
+                previewList.push({
+                    index: i + 1,
+                    artboard: unit.artboardIndex + 1,
+                    currentVal: curVal,
+                    newVal: targetVal
+                });
+            }
+
+            var endNumVal = data.startNum + items.length - 1;
+            var sampleStart = data.prefix + data.formatNumber(data.startNum, data.padDigits, data.digitLang, items[0].textFrame) + data.suffix;
+            var sampleEnd = data.prefix + data.formatNumber(endNumVal, data.padDigits, data.digitLang, items[items.length - 1].textFrame) + data.suffix;
+
+            return JSON.stringify({
+                success: true,
+                count: items.length,
+                artboardsCount: data.artboardsCount,
+                range: sampleStart + " to " + sampleEnd,
+                preview: previewList
+            });
+        } catch (err) {
+            return JSON.stringify({ success: false, error: err.toString() });
+        }
+    },
+
+    executeCardSerial: function (configJson) {
+        try {
+            var cfg = (typeof configJson === "string") ? eval("(" + configJson + ")") : (configJson || {});
+            var data = this._detectCardSerialsInternal(cfg);
+            if (data.error) {
+                return JSON.stringify({ success: false, error: data.error });
+            }
+
+            var items = data.items;
+            var modifiedCount = 0;
+
+            for (var i = 0; i < items.length; i++) {
+                var unit = items[i];
+                var tf = unit.textFrame;
+                if (!tf) continue;
+
+                var numVal = data.startNum + i;
+                var finalTxt = data.prefix + data.formatNumber(numVal, data.padDigits, data.digitLang, tf) + data.suffix;
+
+                try {
+                    tf.contents = finalTxt;
+                    modifiedCount++;
+                } catch(modErr) {}
+            }
+
+            app.redraw();
+
+            var endNumVal = data.startNum + items.length - 1;
+            var sampleStart = data.prefix + data.formatNumber(data.startNum, data.padDigits, data.digitLang, items[0].textFrame) + data.suffix;
+            var sampleEnd = data.prefix + data.formatNumber(endNumVal, data.padDigits, data.digitLang, items[items.length - 1].textFrame) + data.suffix;
+
+            return JSON.stringify({
+                success: true,
+                count: modifiedCount,
+                total: items.length,
+                artboardsCount: data.artboardsCount,
+                range: sampleStart + " to " + sampleEnd
+            });
+        } catch (err) {
+            return JSON.stringify({ success: false, error: err.toString() });
+        }
     }
 };
 
