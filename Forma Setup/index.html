@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ColorLab Forma Setup Pro</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <img src="icons/icon-48.png" alt="Logo" class="brand-icon">
+      <div class="brand-title">
+        <span>Forma Setup Pro</span>
+        <span class="version-badge">v1.2</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btnRefreshDocs" class="icon-btn" title="Refresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content (Single Clean View) -->
+  <main class="tab-content">
+
+    <!-- Status Banner -->
+    <div id="statusBanner" class="status-banner">
+      <span id="statusIcon">ℹ️</span>
+      <span id="statusText">Ready</span>
+    </div>
+
+    <!-- 1. Diary Size Selection (3 Presets) -->
+    <div class="card">
+      <div class="card-title">
+        <span>১. ডায়েরি সাইজ (Diary Size)</span>
+        <span class="badge" id="badgeDiarySize">2 No. Size</span>
+      </div>
+      <div class="size-btn-group">
+        <button type="button" class="btn-size-preset" data-size="size1">
+          <span class="size-title">1 No. Size</span>
+          <span class="size-desc">কম ব্যবহার হয়</span>
+        </button>
+        <button type="button" class="btn-size-preset active" data-size="size2">
+          <span class="size-title">⭐ 2 No. Size</span>
+          <span class="size-desc">বেশি ব্যবহার (Default)</span>
+        </button>
+        <button type="button" class="btn-size-preset" data-size="size3">
+          <span class="size-title">3 No. Size</span>
+          <span class="size-desc">সাইজ ৩</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. Section Type -->
+    <div class="card">
+      <div class="card-title">
+        <span>২. সেকশন (Section Type)</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex: 1;">
+          <label for="selSectionType">ধরন:</label>
+          <select id="selSectionType">
+            <option value="album_16" selected>Album (16 Page)</option>
+            <option value="note_16">Note (16 Page)</option>
+            <option value="inner_32">Inner (32 Page - 2 Formas)</option>
+            <option value="inner_48">Inner (48 Page - 3 Formas)</option>
+            <option value="album_8">Album (8 Page)</option>
+          </select>
+        </div>
+        <div id="batchGroup" class="form-group" style="flex: 1; display: none;">
+          <label for="selFormaBatch">ব্যাচ (Forma Batch):</label>
+          <select id="selFormaBatch">
+            <option value="1" selected>Forma 1 (Pages 1 - 16)</option>
+            <option value="2">Forma 2 (Pages 17 - 32)</option>
+            <option value="3">Forma 3 (Pages 33 - 48)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Forma Layout & Orientation -->
+    <div class="card">
+      <div class="card-title">
+        <span>৩. ফর্মা লেআউট ও রোটেশন</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex: 1.8;">
+          <label for="selMappingScheme">ম্যাপিং স্কিম:</label>
+          <select id="selMappingScheme">
+            <option value="scheme_artboard_match" selected>আর্টবোর্ড ১-১৬ অনুযায়ী (Page 1 -> Artboard 1, Page 2 -> Artboard 2...)</option>
+            <option value="scheme_forma01">ফর্মা ০১ (Standard) — ০১ নং ঘর = পেজ ৮ | ০৫ নং ঘর = পেজ ১</option>
+            <option value="scheme_work_turn">ওয়ার্ক অ্যান্ড টার্ন (Album Fast) — ০১ নং ঘর = পেজ ৫</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex: 1.2;">
+          <label for="selOrientationMode">পেজ রোটেশন:</label>
+          <select id="selOrientationMode">
+            <option value="auto" selected>অটো ফিট (Auto)</option>
+            <option value="rotate_90">৯০° ঘুরানো (Landscape)</option>
+            <option value="upright_0">সোজা (Portrait)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Interactive Diagram Preview -->
+    <div class="diagram-container">
+      <div class="diagram-header">
+        <span style="font-weight: 600; color: #cbd5e1;">আর্টবোর্ড লেআউট প্রিভিউ (4x4)</span>
+        <span id="diagramInfo" style="color: #38bdf8; font-weight: 600;">16 Artboards</span>
+      </div>
+      <div id="impositionGridPreview" class="imposition-grid-preview" style="grid-template-columns: repeat(4, 1fr);">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <button id="btnRunImposition" class="btn-primary" style="padding: 13px 14px; font-size: 13px; margin-top: 4px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+      </svg>
+      <span>⚡ এক ক্লিকে ফর্মা সেটআপ করুন (Setup Forma)</span>
+    </button>
+
+    <div style="font-size: 10px; color: #94a3b8; text-align: center; margin-top: 6px;">
+      💡 পেজ ১-১৬ সিলেক্ট করে বাটনে ক্লিক করুন। স্বয়ংক্রিয়ভাবে আর্টবোর্ডের নির্দিষ্ট স্থানে ঘুরে বসে যাবে।
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <span>ColorLab Digital & Offset Press</span>
+    <span class="author-tag">Yahia Bin Zaman</span>
+  </footer>
+
+  <script src="js/CSInterface.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
