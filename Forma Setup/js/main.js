@@ -236,6 +236,40 @@
     });
   }
 
+  function openInSystemBrowser(url) {
+    var opened = false;
+    try {
+      if (window.__adobe_cep__ && typeof window.__adobe_cep__.openURLInDefaultBrowser === "function") {
+        window.__adobe_cep__.openURLInDefaultBrowser(url);
+        opened = true;
+      }
+    } catch (e) {}
+
+    if (!opened) {
+      try {
+        if (typeof csInterface !== "undefined" && typeof csInterface.openURLInDefaultBrowser === "function") {
+          csInterface.openURLInDefaultBrowser(url);
+          opened = true;
+        }
+      } catch (e) {}
+    }
+
+    if (!opened) {
+      try {
+        if (window.cep && window.cep.process && typeof window.cep.process.createProcess === "function") {
+          window.cep.process.createProcess("/usr/bin/open", url);
+          opened = true;
+        }
+      } catch (e) {}
+    }
+
+    if (!opened) {
+      try {
+        csInterface.evalScript('try { var f = new File("/usr/bin/open"); if (f.exists) { app.system("/usr/bin/open \\"' + url + '\\""); } } catch(e){}');
+      } catch (e) {}
+    }
+  }
+
   function init() {
     initSizePresets();
     initSectionSelection();
@@ -248,13 +282,12 @@
     var authorLink = document.getElementById("authorGithubLink");
     if (authorLink) {
       authorLink.addEventListener("click", function (e) {
-        e.preventDefault();
-        var url = this.getAttribute("data-url") || "https://github.com/yahiabinzaman";
-        if (window.__adobe_cep__ && typeof csInterface.openURLInDefaultBrowser === "function") {
-          csInterface.openURLInDefaultBrowser(url);
-        } else {
-          window.open(url, "_blank");
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
         }
+        var url = this.getAttribute("data-url") || "https://github.com/yahiabinzaman";
+        openInSystemBrowser(url);
       });
     }
 
