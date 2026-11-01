@@ -531,9 +531,34 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus {
   color: var(--text-dim);
 }
 
-.author-tag {
+.author-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   color: #94a3b8;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.author-link:hover {
+  color: #38bdf8;
+}
+
+.author-link .github-icon {
+  fill: currentColor;
+  opacity: 0.85;
+  vertical-align: middle;
+}
+
+.author-link b {
+  color: #cbd5e1;
   font-weight: 600;
+}
+
+.author-link:hover b {
+  color: #38bdf8;
 }
 
 /* Animations */

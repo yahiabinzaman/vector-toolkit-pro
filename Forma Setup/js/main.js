@@ -246,6 +246,19 @@
       showStatus("প্রিভিউ রিফ্রেশ করা হয়েছে।", "info", 2000);
     });
 
+    var authorLink = document.getElementById("authorGithubLink");
+    if (authorLink) {
+      authorLink.addEventListener("click", function (e) {
+        e.preventDefault();
+        var url = this.getAttribute("href") || "https://github.com/yahiabinzaman";
+        if (window.__adobe_cep__ && typeof csInterface.openURLInDefaultBrowser === "function") {
+          csInterface.openURLInDefaultBrowser(url);
+        } else {
+          window.open(url, "_blank");
+        }
+      });
+    }
+
     renderPreview();
   }
 
