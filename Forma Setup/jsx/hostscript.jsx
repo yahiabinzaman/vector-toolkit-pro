@@ -186,97 +186,67 @@ var FormaEngine = (function () {
     }
 
     /**
-     * Maps Page N -> Destination Artboard on the Sheet.
-     * Universal 16-Page Offset Imposition Plate:
-     *   Row 0: [ Slot 0: Page 8,  Slot 1: Page 1,  Slot 2: Page 2,  Slot 3: Page 7  ] (Head-to-Head)
-     *   Row 1: [ Slot 4: Page 9,  Slot 5: Page 16, Slot 6: Page 15, Slot 7: Page 10 ] (Head-to-Head)
-     *   Row 2: [ Slot 8: Page 12, Slot 9: Page 13, Slot 10: Page 14, Slot 11: Page 11 ] (Head-to-Head)
-     *   Row 3: [ Slot 12: Page 5, Slot 13: Page 4, Slot 14: Page 3, Slot 15: Page 6 ] (Head-to-Head)
+     * 16-Page Offset Imposition Plate Layout:
+     *   Row 0: [ Slot 0: Page 8,  Slot 1: Page 1,  Slot 2: Page 2,  Slot 3: Page 7  ]
+     *   Row 1: [ Slot 4: Page 9,  Slot 5: Page 16, Slot 6: Page 15, Slot 7: Page 10 ]
+     *   Row 2: [ Slot 8: Page 12, Slot 9: Page 13, Slot 10: Page 14, Slot 11: Page 11 ]
+     *   Row 3: [ Slot 12: Page 5, Slot 13: Page 4, Slot 14: Page 3, Slot 15: Page 6 ]
      */
+    var PAGE_TO_SLOT_16 = {
+        1: 1, 2: 2, 3: 14, 4: 13, 5: 12, 6: 15, 7: 3, 8: 0,
+        9: 4, 10: 7, 11: 11, 12: 8, 13: 9, 14: 10, 15: 6, 16: 5
+    };
+
+    var PAGE_TO_SLOT_8 = {
+        1: 1, 2: 2, 3: 6, 4: 5, 5: 4, 6: 7, 7: 3, 8: 0
+    };
+
+    /**
+     * Exact User-Specified Column Rotations:
+     * Col 0: 8, 9, 12, 5  -> Dan dike (Right / Clockwise = 270° or -90°)
+     * Col 1: 1, 16, 13, 4 -> Bam dike (Left / Counter-Clockwise = 90°)
+     * Col 2: 2, 15, 14, 3 -> Dan dike (Right / Clockwise = 270° or -90°)
+     * Col 3: 7, 10, 11, 6 -> Bam dike (Left / Counter-Clockwise = 90°)
+     */
+    var PAGE_ROTATION_16 = {
+        8: 270, 9: 270, 12: 270, 5: 270,
+        1: 90,  16: 90, 13: 90,  4: 90,
+        2: 270, 15: 270, 14: 270, 3: 270,
+        7: 90,  10: 90, 11: 90,  6: 90
+    };
+
+    var PAGE_ROTATION_8 = {
+        8: 270, 5: 270,
+        1: 90,  4: 90,
+        2: 270, 3: 270,
+        7: 90,  6: 90
+    };
+
     function getArtboardForPage(doc, pageNum, requiredPages) {
-        var PAGE_TO_SLOT_16 = {
-            1: 1, 2: 2, 3: 14, 4: 13, 5: 12, 6: 15, 7: 3, 8: 0,
-            9: 4, 10: 7, 11: 11, 12: 8, 13: 9, 14: 10, 15: 6, 16: 5
-        };
-        var PAGE_TO_SLOT_8 = {
-            1: 1, 2: 5, 3: 6, 4: 2, 5: 3, 6: 7, 7: 4, 8: 0
-        };
-
         var spatial = getSpatiallySortedArtboards(doc, requiredPages);
-
         if (spatial && spatial.length >= requiredPages) {
             var slot = (requiredPages === 8) ? PAGE_TO_SLOT_8[pageNum] : PAGE_TO_SLOT_16[pageNum];
             if (slot !== undefined && spatial[slot]) {
                 return spatial[slot];
             }
         }
-
         return (pageNum - 1 < doc.artboards.length) ? doc.artboards[pageNum - 1] : null;
     }
 
-    // Determine the artboard row rotation:
-    // Row 0 & 3 = 180° (Top & Bottom rows)
-    // Row 1 & 2 = 0° (Middle rows)
-    function getArtboardRowRotation(artboard, doc) {
-        var abs = [];
-        for (var i = 0; i < doc.artboards.length; i++) {
-            var r = doc.artboards[i].artboardRect;
-            abs.push({ cy: (r[1] + r[3]) / 2, ab: doc.artboards[i] });
+    function getPageRotation(pageNum, requiredPages) {
+        if (requiredPages === 8) {
+            return (PAGE_ROTATION_8[pageNum] !== undefined) ? PAGE_ROTATION_8[pageNum] : 90;
         }
-        abs.sort(function (a, b) { return b.cy - a.cy; });
-
-        var rank = 0;
-        for (var k = 0; k < abs.length; k++) {
-            if (abs[k].ab === artboard) {
-                rank = k;
-                break;
-            }
-        }
-
-        if (abs.length >= 16) {
-            var row = Math.floor(rank / 4);
-            return (row === 0 || row === 3) ? 180 : 0;
-        } else if (abs.length >= 8) {
-            var row8 = Math.floor(rank / 4);
-            return (row8 === 0) ? 180 : 0;
-        }
-
-        return 0;
+        return (PAGE_ROTATION_16[pageNum] !== undefined) ? PAGE_ROTATION_16[pageNum] : 90;
     }
 
-    function placeOnArtboard(item, artboard, baseRot, orientationMode) {
+    function placeOnArtboard(item, artboard, rotAngle) {
         var abRect = artboard.artboardRect;
         var abW = Math.abs(abRect[2] - abRect[0]);
         var abH = Math.abs(abRect[1] - abRect[3]);
-        var isLandscapeAB = (abW > abH);
 
-        var bBefore = getPageTrimBounds(item, abW, abH);
-        var itemW = Math.abs(bBefore[2] - bBefore[0]);
-        var itemH = Math.abs(bBefore[1] - bBefore[3]);
-        var isPortraitItem = (itemH > itemW);
-
-        var finalRot = baseRot || 0;
-
-        if (orientationMode === "rotate_90") {
-            finalRot = (baseRot === 180) ? 270 : 90;
-        } else if (orientationMode === "upright_0") {
-            finalRot = baseRot;
-        } else {
-            // "auto" mode:
-            // When artboard is Landscape (plate sheet) and page is Portrait:
-            // Rotate to fit the sheet cells head-to-head:
-            // Row 0 & 3 (baseRot 180) -> 270° (Head points Right / Downward)
-            // Row 1 & 2 (baseRot 0)   -> 90°  (Head points Left / Upward)
-            // Difference is 180° (Head-to-Head)!
-            if (isLandscapeAB && isPortraitItem) {
-                finalRot = (baseRot === 180) ? 270 : 90;
-            } else {
-                finalRot = baseRot;
-            }
-        }
-
-        if (finalRot !== 0) {
-            item.rotate(finalRot, true, true, true, true, Transformation.CENTER);
+        if (rotAngle && rotAngle !== 0) {
+            item.rotate(rotAngle, true, true, true, true, Transformation.CENTER);
         }
 
         var abTargetCX = (abRect[0] + abRect[2]) / 2;
@@ -333,22 +303,21 @@ var FormaEngine = (function () {
 
                 // Sort selected pages in 1 to 16 sequence (Row 1: 1..8, Row 2: 9..16)
                 var sortedPages = sortSelected16Pages(sel);
-                var orientationMode = params.orientationMode || "auto";
 
-                // Map Page N -> Artboard N
+                // Map Page N -> Artboard N with Exact User Rotation
                 for (var p = 1; p <= requiredPages; p++) {
                     var pageItem = sortedPages[p - 1];
                     var destAB = getArtboardForPage(doc, p, requiredPages);
                     if (destAB) {
-                        var baseRot = getArtboardRowRotation(destAB, doc);
-                        placeOnArtboard(pageItem, destAB, baseRot, orientationMode);
+                        var rot = getPageRotation(p, requiredPages);
+                        placeOnArtboard(pageItem, destAB, rot);
                     }
                 }
 
                 app.redraw();
                 return toJson({
                     success: true,
-                    message: "আলহামদুলিল্লাহ! পেজ ১ হতে " + requiredPages + " নিখুঁতভাবে আর্টবোর্ড ১ হতে " + requiredPages + "-এ সাজানো হয়েছে।"
+                    message: "আলহামদুলিল্লাহ! পেজ ১ হতে " + requiredPages + " নিখুঁতভাবে আপনার চাহিদামতো রোটেশন সহ আর্টবোর্ডে সাজানো হয়েছে।"
                 });
 
             } catch (ex) {

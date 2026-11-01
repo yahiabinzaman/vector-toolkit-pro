@@ -173,75 +173,59 @@
         return fb;
     }
 
+    var PAGE_TO_SLOT_16 = {
+        1: 1, 2: 2, 3: 14, 4: 13, 5: 12, 6: 15, 7: 3, 8: 0,
+        9: 4, 10: 7, 11: 11, 12: 8, 13: 9, 14: 10, 15: 6, 16: 5
+    };
+
+    var PAGE_TO_SLOT_8 = {
+        1: 1, 2: 2, 3: 6, 4: 5, 5: 4, 6: 7, 7: 3, 8: 0
+    };
+
+    // User exact column rotation:
+    // 8-9-12-5  -> Dan (Right = 270°)
+    // 1-16-13-4 -> Bam (Left = 90°)
+    // 2-15-14-3 -> Dan (Right = 270°)
+    // 7-10-11-6 -> Bam (Left = 90°)
+    var PAGE_ROTATION_16 = {
+        8: 270, 9: 270, 12: 270, 5: 270,
+        1: 90,  16: 90, 13: 90,  4: 90,
+        2: 270, 15: 270, 14: 270, 3: 270,
+        7: 90,  10: 90, 11: 90,  6: 90
+    };
+
+    var PAGE_ROTATION_8 = {
+        8: 270, 5: 270,
+        1: 90,  4: 90,
+        2: 270, 3: 270,
+        7: 90,  6: 90
+    };
+
     function getArtboardForPage(doc, pageNum, requiredPages) {
-        var PAGE_TO_SLOT_16 = {
-            1: 1, 2: 2, 3: 14, 4: 13, 5: 12, 6: 15, 7: 3, 8: 0,
-            9: 4, 10: 7, 11: 11, 12: 8, 13: 9, 14: 10, 15: 6, 16: 5
-        };
-        var PAGE_TO_SLOT_8 = {
-            1: 1, 2: 5, 3: 6, 4: 2, 5: 3, 6: 7, 7: 4, 8: 0
-        };
-
         var spatial = getSpatiallySortedArtboards(doc, requiredPages);
-
         if (spatial && spatial.length >= requiredPages) {
             var slot = (requiredPages === 8) ? PAGE_TO_SLOT_8[pageNum] : PAGE_TO_SLOT_16[pageNum];
             if (slot !== undefined && spatial[slot]) {
                 return spatial[slot];
             }
         }
-
         return (pageNum - 1 < doc.artboards.length) ? doc.artboards[pageNum - 1] : null;
     }
 
-    function getArtboardRowRotation(artboard, doc) {
-        var abs = [];
-        for (var i = 0; i < doc.artboards.length; i++) {
-            var r = doc.artboards[i].artboardRect;
-            abs.push({ cy: (r[1] + r[3]) / 2, ab: doc.artboards[i] });
+    function getPageRotation(pageNum, requiredPages) {
+        if (requiredPages === 8) {
+            return (PAGE_ROTATION_8[pageNum] !== undefined) ? PAGE_ROTATION_8[pageNum] : 90;
         }
-        abs.sort(function (a, b) { return b.cy - a.cy; });
-
-        var rank = 0;
-        for (var k = 0; k < abs.length; k++) {
-            if (abs[k].ab === artboard) {
-                rank = k;
-                break;
-            }
-        }
-
-        if (abs.length >= 16) {
-            var row = Math.floor(rank / 4);
-            return (row === 0 || row === 3) ? 180 : 0;
-        } else if (abs.length >= 8) {
-            var row8 = Math.floor(rank / 4);
-            return (row8 === 0) ? 180 : 0;
-        }
-
-        return 0;
+        return (PAGE_ROTATION_16[pageNum] !== undefined) ? PAGE_ROTATION_16[pageNum] : 90;
     }
 
-    function placeOnArtboard(item, artboard, baseRot) {
+    function placeOnArtboard(item, artboard, rotAngle) {
         var abRect = artboard.artboardRect;
         var abW = Math.abs(abRect[2] - abRect[0]);
         var abH = Math.abs(abRect[1] - abRect[3]);
-        var isLandscapeAB = (abW > abH);
 
-        var bBefore = getPageTrimBounds(item, abW, abH);
-        var itemW = Math.abs(bBefore[2] - bBefore[0]);
-        var itemH = Math.abs(bBefore[1] - bBefore[3]);
-        var isPortraitItem = (itemH > itemW);
-
-        var finalRot = baseRot || 0;
-
-        if (isLandscapeAB && isPortraitItem) {
-            finalRot = (baseRot === 180) ? 270 : 90;
-        } else {
-            finalRot = baseRot;
-        }
-
-        if (finalRot !== 0) {
-            item.rotate(finalRot, true, true, true, true, Transformation.CENTER);
+        if (rotAngle && rotAngle !== 0) {
+            item.rotate(rotAngle, true, true, true, true, Transformation.CENTER);
         }
 
         var abTargetCX = (abRect[0] + abRect[2]) / 2;
@@ -260,11 +244,11 @@
         var pageItem = sortedPages[p - 1];
         var destAB = getArtboardForPage(doc, p, requiredPages);
         if (destAB) {
-            var baseRot = getArtboardRowRotation(destAB, doc);
-            placeOnArtboard(pageItem, destAB, baseRot);
+            var rot = getPageRotation(p, requiredPages);
+            placeOnArtboard(pageItem, destAB, rot);
         }
     }
 
     app.redraw();
-    alert("আলহামদুলিল্লাহ!\n১৬-টি পেজ সফলভাবে ফর্মা অনুপাতে (হেড-টু-হেড রোটেশন সহ) নিখুঁতভাবে সাজানো সম্পন্ন হয়েছে!");
+    alert("আলহামদুলিল্লাহ!\n১৬-টি পেজ সফলভাবে আপনার সুনির্দিষ্ট কলাম রোটেশন অনুযায়ী প্লেটে নিখুঁতভাবে সাজানো হয়েছে!");
 })();
