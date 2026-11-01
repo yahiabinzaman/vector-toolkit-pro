@@ -83,7 +83,6 @@
     7: { slot: 3, rot: 90,  ab: 7 },
     8: { slot: 0, rot: 270, ab: 8 }
   };
-  };
 
   function showStatus(text, type, durationMs) {
     if (!els.statusBanner) return;
@@ -250,7 +249,7 @@
     if (authorLink) {
       authorLink.addEventListener("click", function (e) {
         e.preventDefault();
-        var url = this.getAttribute("href") || "https://github.com/yahiabinzaman";
+        var url = this.getAttribute("data-url") || "https://github.com/yahiabinzaman";
         if (window.__adobe_cep__ && typeof csInterface.openURLInDefaultBrowser === "function") {
           csInterface.openURLInDefaultBrowser(url);
         } else {
@@ -262,6 +261,10 @@
     renderPreview();
   }
 
-  document.addEventListener("DOMContentLoaded", init);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 
 })();
