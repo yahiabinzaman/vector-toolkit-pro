@@ -1,7 +1,7 @@
 #!/bin/bash
 # ==============================================================================
 # ColorLab Forma Setup Pro - 1-Click Installer (macOS)
-# Developed by Yahia Bin Zaman
+# Developed by Yahia Bin Zaman | https://github.com/yahiabinzaman
 # ==============================================================================
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -14,7 +14,7 @@ echo "=========================================================="
 echo ""
 
 # Enable CEP PlayerDebugMode for all CSXS versions
-for ver in 9 10 11 12 13 14 15 16; do
+for ver in 9 10 11 12 13 14 15 16 17 18 19 20; do
     defaults write com.adobe.CSXS.$ver PlayerDebugMode 1 2>/dev/null || true
 done
 
@@ -24,9 +24,9 @@ rm -rf "$TARGET_DIR"
 mkdir -p "$TARGET_DIR"
 
 # Copy all extension files (including hidden dotfiles)
-shopt -s dotglob
+shopt -s dotglob 2>/dev/null || true
 cp -R "$DIR/"* "$TARGET_DIR/" 2>/dev/null || true
-shopt -u dotglob
+shopt -u dotglob 2>/dev/null || true
 
 # Copy standalone JSX script to Illustrator Presets if accessible
 if [ -f "$DIR/Forma_Setup_Pro_QuickRun.jsx" ]; then

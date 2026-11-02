@@ -219,6 +219,48 @@
         return (PAGE_ROTATION_16[pageNum] !== undefined) ? PAGE_ROTATION_16[pageNum] : 90;
     }
 
+    function repairRotatedClippingMasks(item) {
+        if (!item || item.typename !== "GroupItem") return;
+        try {
+            if (item.clipped) {
+                if (item.pageItems && item.pageItems.length === 2 && item.pageItems[1].typename === "GroupItem" && item.pageItems[1].pageItems.length === 1) {
+                    var nested = item.pageItems[1];
+                    var inner = nested.pageItems[0];
+                    inner.move(item, ElementPlacement.PLACEATEND);
+                    nested.remove();
+                }
+                item.clipped = false;
+                item.clipped = true;
+            }
+            if (item.pageItems) {
+                for (var i = 0; i < item.pageItems.length; i++) {
+                    var ch = item.pageItems[i];
+                    if (ch.typename === "GroupItem") {
+                        repairRotatedClippingMasks(ch);
+                    }
+                }
+            }
+        } catch (e) {}
+    }
+
+    function releaseBrokenFrameOpacityMasks(doc, item) {
+        if (!item) return;
+        try {
+            var name = (item.name || "").toLowerCase();
+            if (name.indexOf("frame") !== -1 || name.indexOf("ribon") !== -1 || name.indexOf(".psd") !== -1) {
+                try {
+                    doc.selection = [item];
+                    app.executeMenuCommand("releaseMask");
+                } catch (eRel) {}
+            }
+            if (item.typename === "GroupItem" && item.pageItems) {
+                for (var i = 0; i < item.pageItems.length; i++) {
+                    releaseBrokenFrameOpacityMasks(doc, item.pageItems[i]);
+                }
+            }
+        } catch (e) {}
+    }
+
     function placeOnArtboard(item, artboard, rotAngle) {
         var abRect = artboard.artboardRect;
         var abW = Math.abs(abRect[2] - abRect[0]);
@@ -226,6 +268,8 @@
 
         if (rotAngle && rotAngle !== 0) {
             item.rotate(rotAngle, true, true, true, true, Transformation.CENTER);
+            repairRotatedClippingMasks(item);
+            releaseBrokenFrameOpacityMasks(doc, item);
         }
 
         var abTargetCX = (abRect[0] + abRect[2]) / 2;
@@ -239,6 +283,66 @@
     }
 
     var sortedPages = sortSelected16Pages(sel);
+
+    function isAlbum(d) {
+        var n = d.name.toLowerCase();
+        if (n.indexOf("album") !== -1 || n.indexOf("jhuri") !== -1 || n.indexOf("front & back") !== -1 ||
+            d.name.indexOf("\u0986\u09B2") !== -1 || d.name.indexOf("\u09AC\u09CD\u09AF\u09BE\u0995") !== -1) return true;
+        if (d.artboards.length === 16) {
+            var r = d.artboards[0].artboardRect;
+            return (Math.abs(r[1] - r[3]) > Math.abs(r[2] - r[0]));
+        }
+        return false;
+    }
+
+    if (requiredPages === 16 && isAlbum(doc)) {
+        var abs = [];
+        for (var a = 0; a < doc.artboards.length; a++) {
+            var ab = doc.artboards[a];
+            var r = ab.artboardRect;
+            abs.push({ ab: ab, cx: (r[0] + r[2]) / 2, cy: (r[1] + r[3]) / 2 });
+        }
+        abs.sort(function (x, y) { return x.cx - y.cx; });
+        var left8 = abs.slice(0, 8);
+        var right8 = abs.slice(8, 16);
+
+        left8.sort(function (x, y) { return y.cy - x.cy; });
+        var leftTop = left8.slice(0, 4).sort(function (x, y) { return x.cx - y.cx; });
+        var leftBot = left8.slice(4, 8).sort(function (x, y) { return x.cx - y.cx; });
+
+        right8.sort(function (x, y) { return y.cy - x.cy; });
+        var rightTop = right8.slice(0, 4).sort(function (x, y) { return x.cx - y.cx; });
+        var rightBot = right8.slice(4, 8).sort(function (x, y) { return x.cx - y.cx; });
+
+        var albumMap = [
+            { ab: leftTop[0].ab, p: 5,  rot: 180, name: "05 - Artboard 5" },
+            { ab: leftTop[1].ab, p: 12, rot: 180, name: "12 - Artboard 12" },
+            { ab: leftTop[2].ab, p: 9,  rot: 180, name: "09 - Artboard 9" },
+            { ab: leftTop[3].ab, p: 8,  rot: 180, name: "08 - Artboard 8" },
+            { ab: leftBot[0].ab, p: 4,  rot: 0,   name: "04 - Artboard 4" },
+            { ab: leftBot[1].ab, p: 13, rot: 0,   name: "13 - Artboard 13" },
+            { ab: leftBot[2].ab, p: 16, rot: 0,   name: "16 - Artboard 16" },
+            { ab: leftBot[3].ab, p: 1,  rot: 0,   name: "01 - Artboard 1" },
+            { ab: rightTop[0].ab, p: 7,  rot: 180, name: "07 - Artboard 7" },
+            { ab: rightTop[1].ab, p: 10, rot: 180, name: "10 - Artboard 10" },
+            { ab: rightTop[2].ab, p: 11, rot: 180, name: "11 - Artboard 11" },
+            { ab: rightTop[3].ab, p: 6,  rot: 180, name: "06 - Artboard 6" },
+            { ab: rightBot[0].ab, p: 2,  rot: 0,   name: "02 - Artboard 2" },
+            { ab: rightBot[1].ab, p: 15, rot: 0,   name: "15 - Artboard 15" },
+            { ab: rightBot[2].ab, p: 14, rot: 0,   name: "14 - Artboard 14" },
+            { ab: rightBot[3].ab, p: 3,  rot: 0,   name: "03 - Artboard 3" }
+        ];
+
+        for (var am = 0; am < albumMap.length; am++) {
+            var mObj = albumMap[am];
+            placeOnArtboard(sortedPages[mObj.p - 1], mObj.ab, mObj.rot);
+            mObj.ab.name = mObj.name;
+        }
+
+        app.redraw();
+        alert("আলহামদুলিল্লাহ!\nঅ্যালবাম ১৬-টি পেজ নিখুঁতভাবে আপনার চাহিদামতো রোটেশন সহ প্লেটে সাজানো হয়েছে!");
+        return;
+    }
 
     for (var p = 1; p <= requiredPages; p++) {
         var pageItem = sortedPages[p - 1];

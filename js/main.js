@@ -1,48 +1,71 @@
-// Global URL opener for Adobe CEP
-window.openAuthorProfile = function (e) {
-    if (e && e.preventDefault) e.preventDefault();
-    var url = "https://github.com/yahiabinzaman";
-    
-    // 1. CSInterface API
-    try {
-        if (window.csInterface && typeof window.csInterface.openURLInDefaultBrowser === "function") {
-            window.csInterface.openURLInDefaultBrowser(url);
-            return false;
-        }
-    } catch (e1) {}
+// ==========================================
+// VECTOR TOOLKIT PRO - CLIENT CONTROLLER
+// Developed by Yahia Bin Zaman
+// ==========================================
 
-    // 2. CEP native
+// Single-instance debounced system browser opener (Fixes multiple tabs/windows bug)
+var lastUrlOpenTime = 0;
+function openInSystemBrowser(url) {
+    if (!url) url = "https://github.com/yahiabinzaman";
+    var now = Date.now();
+    if (now - lastUrlOpenTime < 1500) {
+        return false;
+    }
+    lastUrlOpenTime = now;
+
+    var opened = false;
+
+    // 1. CEP native API
     try {
         if (window.__adobe_cep__ && typeof window.__adobe_cep__.openURLInDefaultBrowser === "function") {
             window.__adobe_cep__.openURLInDefaultBrowser(url);
-            return false;
+            opened = true;
         }
-    } catch (e2) {}
+    } catch (e1) {}
 
-    // 3. CEP util
-    try {
-        if (window.cep && window.cep.util && typeof window.cep.util.openURLInDefaultBrowser === "function") {
-            window.cep.util.openURLInDefaultBrowser(url);
-            return false;
-        }
-    } catch (e3) {}
-
-    // 4. Node.js child_process for macOS
-    try {
-        if (typeof require === "function") {
-            var cp = require("child_process");
-            if (cp && cp.exec) {
-                cp.exec('open "' + url + '"');
-                return false;
+    // 2. CSInterface wrapper
+    if (!opened) {
+        try {
+            if (typeof csInterface !== "undefined" && typeof csInterface.openURLInDefaultBrowser === "function") {
+                csInterface.openURLInDefaultBrowser(url);
+                opened = true;
             }
-        }
-    } catch (e4) {}
+        } catch (e2) {}
+    }
 
-    // 5. Standard fallback
-    try {
-        window.open(url, "_blank");
-    } catch (e5) {}
+    // 3. Node.js child_process fallback
+    if (!opened) {
+        try {
+            if (typeof require === "function") {
+                var cp = require("child_process");
+                if (cp && typeof cp.exec === "function") {
+                    var cmd = (typeof process !== "undefined" && process.platform === "win32") ? ('start "" "' + url + '"') : ('open "' + url + '"');
+                    cp.exec(cmd);
+                    opened = true;
+                }
+            }
+        } catch (e3) {}
+    }
 
+    // 4. ExtendScript host fallback
+    if (!opened) {
+        try {
+            if (typeof csInterface !== "undefined" && typeof csInterface.evalScript === "function") {
+                csInterface.evalScript('openWebUrl("' + url + '");');
+                opened = true;
+            }
+        } catch (e4) {}
+    }
+
+    return opened;
+}
+
+window.openAuthorProfile = function (e) {
+    if (e) {
+        if (typeof e.preventDefault === "function") e.preventDefault();
+        if (typeof e.stopPropagation === "function") e.stopPropagation();
+    }
+    openInSystemBrowser("https://github.com/yahiabinzaman");
     return false;
 };
 
@@ -139,8 +162,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Refresh Live Document Stats
+    var isRefreshingStats = false;
     function refreshStats() {
+        if (isRefreshingStats) return;
+        isRefreshingStats = true;
         csInterface.evalScript("VectorToolkitHost.getDocStats();", function (res) {
+            isRefreshingStats = false;
             try {
                 var s = JSON.parse(res);
                 if (!s || !s.success) return;
@@ -526,56 +553,24 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Author GitHub Link
+    // Author GitHub Link (Clean Single System Browser Launch)
     var btnAuthorLink = document.getElementById("btn-author-link");
     if (btnAuthorLink) {
         btnAuthorLink.addEventListener("click", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            var url = "https://github.com/yahiabinzaman";
-            // 1. CEP API
-            try {
-                if (window.__adobe_cep__) {
-                    window.__adobe_cep__.openURLInDefaultBrowser(url);
-                }
-            } catch (err1) {}
-            // 2. Node child_process
-            try {
-                if (typeof require === "function") {
-                    var cp = require('child_process');
-                    if (process.platform === 'darwin') {
-                        cp.exec('open "' + url + '"');
-                    } else {
-                        cp.exec('start "" "' + url + '"');
-                    }
-                }
-            } catch (err2) {}
-            // 3. ExtendScript host
-            try {
-                csInterface.evalScript('openWebUrl("' + url + '");');
-            } catch (err3) {}
-            // 4. Window open
-            try {
-                window.open(url, "_blank");
-            } catch (err4) {}
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            var url = this.getAttribute("data-url") || "https://github.com/yahiabinzaman";
+            openInSystemBrowser(url);
         });
     }
 
-    // Initial Load & Auto Refresh
+    // Initial Load & Auto Refresh (optimized - no CPU-intensive mousemove hammering)
     refreshStats();
     window.addEventListener("focus", refreshStats);
     document.addEventListener("mouseenter", refreshStats);
-    document.addEventListener("mousemove", (function() {
-        var last = 0;
-        return function() {
-            var now = Date.now();
-            if (now - last > 800) {
-                last = now;
-                refreshStats();
-            }
-        };
-    })());
-    setInterval(refreshStats, 1000);
+    setInterval(refreshStats, 2500);
 
     // ==========================================
     // TAB 8: BIJOY TO UNICODE BANGLA BOOK CONVERTER
@@ -622,7 +617,6 @@ document.addEventListener("DOMContentLoaded", function () {
     var rbBijoyAll = document.getElementById("rb-bijoy-all");
     var rbBijoySel = document.getElementById("rb-bijoy-sel");
     var bijoyFontSelect = document.getElementById("bijoy-font-select");
-    var bijoyVersionSelect = document.getElementById("bijoy-version-select");
     var chkBijoyKars = document.getElementById("chk-bijoy-kars");
     var chkBijoyUnlock = document.getElementById("chk-bijoy-unlock");
     var bijoyStatusBox = document.getElementById("bijoy-status-box");
@@ -668,17 +662,13 @@ document.addEventListener("DOMContentLoaded", function () {
                             bijoyStatusDetails.innerHTML = "Converted: " + data.count + " of " + data.total + " text frames<br>" +
                                 "Target Font: " + appliedFont + "<br>" +
                                 "Pre-kars & Conjuncts: Verified & Aligned<br>" +
-                                "Special thanks to the legend <a href=\"#\" onclick=\"openAuthorProfile(event); return false;\" style=\"color: #4a90e2; text-decoration: underline; cursor: pointer; font-weight: 600;\">Yahia Bin Zaman</a>";
+                                "Special thanks to the legend <a href=\"javascript:void(0)\" id=\"credit-author-link\" style=\"color: #4a90e2; text-decoration: underline; cursor: pointer; font-weight: 600;\">Yahia Bin Zaman</a>";
 
                             var creditLink = document.getElementById("credit-author-link");
                             if (creditLink) {
                                 creditLink.onclick = function (e) {
                                     if (e && e.preventDefault) e.preventDefault();
-                                    if (window.__adobe_cep__) {
-                                        window.__adobe_cep__.openURLInDefaultBrowser("https://github.com/yahiabinzaman");
-                                    } else {
-                                        window.open("https://github.com/yahiabinzaman", "_blank");
-                                    }
+                                    openInSystemBrowser("https://github.com/yahiabinzaman");
                                     return false;
                                 };
                             }
@@ -824,46 +814,76 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ==========================================
-    // TAB 10: CARD SERIAL AUTO-FILLER (01-02, 03-04...)
+    // TAB 10: NUMBERING PRO (1-CLICK CARD SERIAL FIXER)
     // ==========================================
     function getCardSerialConfig() {
         var scopeElem = document.querySelector('input[name="cardserial-scope"]:checked');
         var orderElem = document.querySelector('input[name="cardserial-order"]:checked');
         var txtStart = document.getElementById("cardserial-start");
-        var selPadding = document.getElementById("cardserial-padding");
-        var selDigitLang = document.getElementById("cardserial-digit-lang");
+        var selPreset = document.getElementById("cardserial-format-preset");
         var txtPrefix = document.getElementById("cardserial-prefix");
         var txtSuffix = document.getElementById("cardserial-suffix");
         var txtPlaceholder = document.getElementById("cardserial-placeholder");
+
+        var padDigits = 1;
+        var digitLang = "bn";
+
+        if (selPreset) {
+            var val = selPreset.value;
+            if (val === "bn-nopad") { padDigits = 1; digitLang = "bn"; }
+            else if (val === "bn-2pad") { padDigits = 2; digitLang = "bn"; }
+            else if (val === "bn-3pad") { padDigits = 3; digitLang = "bn"; }
+            else if (val === "en-nopad") { padDigits = 1; digitLang = "en"; }
+            else if (val === "en-2pad") { padDigits = 2; digitLang = "en"; }
+            else if (val === "en-3pad") { padDigits = 3; digitLang = "en"; }
+            else { padDigits = 1; digitLang = "auto"; }
+        }
+
+        var phVal = txtPlaceholder ? txtPlaceholder.value.trim() : "";
+        if (phVal.toLowerCase() === "auto") phVal = "";
 
         return {
             scope: scopeElem ? scopeElem.value : "all_artboards",
             order: orderElem ? orderElem.value : "row",
             startNum: txtStart ? (txtStart.value || "1") : "1",
-            padding: selPadding ? (selPadding.value || "2") : "2",
-            digitLang: selDigitLang ? (selDigitLang.value || "auto") : "auto",
+            padding: padDigits,
+            digitLang: digitLang,
             prefix: txtPrefix ? txtPrefix.value : "",
             suffix: txtSuffix ? txtSuffix.value : "",
-            placeholder: txtPlaceholder ? txtPlaceholder.value.trim() : "00"
+            placeholder: phVal
         };
     }
 
     var btnCardSerialScan = document.getElementById("btn-cardserial-scan");
     var btnCardSerialApply = document.getElementById("btn-cardserial-apply");
+    var btnCardSerialDialog = document.getElementById("btn-cardserial-dialog");
     var csStatusBox = document.getElementById("cardserial-status-box");
     var csStatusHeading = document.getElementById("cardserial-status-heading");
     var csStatusDetails = document.getElementById("cardserial-status-details");
+
+    if (btnCardSerialDialog) {
+        btnCardSerialDialog.addEventListener("click", function () {
+            csInterface.evalScript("VectorToolkitHost.launchCardNumberingProDialog()", function (res) {
+                try {
+                    var data = JSON.parse(res);
+                    if (!data.success && data.error) {
+                        showToast(data.error, "error");
+                    }
+                } catch (e) {}
+            });
+        });
+    }
 
     if (btnCardSerialScan) {
         btnCardSerialScan.addEventListener("click", function () {
             var cfg = getCardSerialConfig();
             btnCardSerialScan.disabled = true;
-            btnCardSerialScan.innerText = "Scanning Cards...";
+            btnCardSerialScan.innerText = "কার্ড স্ক্যান হচ্ছে...";
             if (csStatusBox) csStatusBox.style.display = "none";
 
             csInterface.evalScript("VectorToolkitHost.scanCardSerials(" + JSON.stringify(JSON.stringify(cfg)) + ")", function (res) {
                 btnCardSerialScan.disabled = false;
-                btnCardSerialScan.innerText = "🔍 Scan & Preview Cards";
+                btnCardSerialScan.innerText = "🔍 Scan & Live Preview";
 
                 try {
                     var data = JSON.parse(res);
@@ -872,35 +892,35 @@ document.addEventListener("DOMContentLoaded", function () {
                             csStatusBox.style.display = "block";
                             csStatusBox.style.borderColor = "#00b0ff";
                             csStatusHeading.style.color = "#00e5ff";
-                            csStatusHeading.innerText = "✓ Found " + data.count + " Cards (" + data.artboardsCount + " Artboards)";
+                            csStatusHeading.innerText = "✓ মোট " + data.count + " টি কার্ড শনাক্ত হয়েছে (" + data.artboardsCount + " টি আর্টবোর্ড)";
 
-                            var previewHtml = "<strong>Number Range:</strong> " + data.range + "<br>" +
-                                "<strong>Sequence Order:</strong> " + (cfg.order === "row" ? "Row-by-Row (01-02, 03-04...)" : "Column-by-Column") + "<br>" +
+                            var previewHtml = "<strong>সিরিয়াল রেঞ্জ:</strong> " + data.range + "<br>" +
+                                "<strong>ক্রম:</strong> " + (cfg.order === "row" ? "Row-by-Row: ১ - ২, ৩ - ৪... (আড়াআড়ি)" : "Column-by-Column: ১ - ৫, ২ - ৬... (ওপর-নিচ)") + "<br>" +
                                 "<div style='margin-top: 6px; max-height: 120px; overflow-y: auto; background: rgba(0,0,0,0.25); padding: 5px; border-radius: 3px;'>";
 
                             if (data.preview && data.preview.length > 0) {
                                 for (var p = 0; p < data.preview.length; p++) {
                                     var item = data.preview[p];
                                     previewHtml += "<div style='margin-bottom: 2px; font-family: monospace; font-size: 10px;'>" +
-                                        "Card #" + item.index + " [AB " + item.artboard + "]: '" + (item.currentVal || "empty") + "' ➔ <strong style='color:#00e676;'>" + item.newVal + "</strong></div>";
+                                        "কার্ড #" + item.index + " [AB " + item.artboard + "]: '" + (item.currentVal || "(empty)") + "' ➔ <strong style='color:#00e676;'>" + item.newVal + "</strong></div>";
                                 }
                                 if (data.count > data.preview.length) {
-                                    previewHtml += "<div style='color: #888; font-style: italic;'>... and " + (data.count - data.preview.length) + " more cards</div>";
+                                    previewHtml += "<div style='color: #888; font-style: italic;'>... এবং আরও " + (data.count - data.preview.length) + " টি কার্ড ...</div>";
                                 }
                             }
                             previewHtml += "</div>";
                             csStatusDetails.innerHTML = previewHtml;
                         }
-                        showToast("Detected " + data.count + " cards across " + data.artboardsCount + " artboards!", "success");
+                        showToast("✓ মোট " + data.count + " টি কার্ড শনাক্ত হয়েছে!", "success");
                     } else {
                         if (csStatusBox && csStatusHeading && csStatusDetails) {
                             csStatusBox.style.display = "block";
                             csStatusBox.style.borderColor = "#ff5252";
                             csStatusHeading.style.color = "#ff5252";
-                            csStatusHeading.innerText = "Scan Warning";
-                            csStatusDetails.innerText = data.error || "No cards detected.";
+                            csStatusHeading.innerText = "⚠️ স্ক্যান সতর্কতা";
+                            csStatusDetails.innerText = data.error || "কোনো কার্ড পাওয়া যায়নি।";
                         }
-                        showToast(data.error || "No cards detected.", "error");
+                        showToast(data.error || "কোনো কার্ড পাওয়া যায়নি।", "error");
                     }
                 } catch (e) {
                     if (csStatusBox && csStatusHeading && csStatusDetails) {
@@ -917,12 +937,12 @@ document.addEventListener("DOMContentLoaded", function () {
         btnCardSerialApply.addEventListener("click", function () {
             var cfg = getCardSerialConfig();
             btnCardSerialApply.disabled = true;
-            btnCardSerialApply.innerText = "Applying Card Serials...";
+            btnCardSerialApply.innerText = "সিরিয়াল বসানো হচ্ছে...";
             if (csStatusBox) csStatusBox.style.display = "none";
 
             csInterface.evalScript("VectorToolkitHost.executeCardSerial(" + JSON.stringify(JSON.stringify(cfg)) + ")", function (res) {
                 btnCardSerialApply.disabled = false;
-                btnCardSerialApply.innerText = "⚡ Apply Auto Serial (01, 02, 03...)";
+                btnCardSerialApply.innerText = "⚡ 1-Click Apply Serial (১ ক্লিকে সিরিয়াল বসান)";
 
                 try {
                     var data = JSON.parse(res);
@@ -931,13 +951,13 @@ document.addEventListener("DOMContentLoaded", function () {
                             csStatusBox.style.display = "block";
                             csStatusBox.style.borderColor = "#00e676";
                             csStatusHeading.style.color = "#00e676";
-                            csStatusHeading.innerText = "✓ Serial Numbers Applied Successfully!";
-                            csStatusDetails.innerHTML = "<strong>Updated:</strong> " + data.count + " of " + data.total + " Cards<br>" +
-                                "<strong>Number Range:</strong> " + data.range + "<br>" +
-                                "<strong>Grid Order:</strong> " + (cfg.order === "row" ? "01 - 02, 03 - 04 (Horizontal Grid)" : "01 - 04, 02 - 05 (Vertical Columns)") + "<br>" +
-                                "<strong style='color: #81c784;'>Thanks to Legend Yahia Bin Zaman</strong>";
+                            csStatusHeading.innerText = "✓ সফলভাবে " + data.count + " টি কার্ডে সিরিয়াল নম্বর বসানো হয়েছে!";
+                            csStatusDetails.innerHTML = "<strong>সিরিয়াল রেঞ্জ:</strong> " + data.range + "<br>" +
+                                "<strong>ক্রম:</strong> " + (cfg.order === "row" ? "Row-by-Row: ১ - ২, ৩ - ৪... (আড়াআড়ি)" : "Column-by-Column: ১ - ৫, ২ - ৬... (ওপর-নিচ)") + "<br>" +
+                                "<span style='color: #81c784; font-size: 10px;'>✨ ফন্ট, সাইজ, কালার, লিডিং ও অ্যালাইনমেন্ট অক্ষুণ্ণ রাখা হয়েছে।</span><br>" +
+                                "<strong style='color: #00e5ff;'>Developed by Yahia Bin Zaman</strong>";
                         }
-                        showToast("Successfully numbered " + data.count + " cards (" + data.range + ")!", "success");
+                        showToast("✓ সফলভাবে " + data.count + " টি কার্ডে সিরিয়াল নম্বর প্রয়োগ করা হয়েছে!", "success");
                     } else {
                         if (csStatusBox && csStatusHeading && csStatusDetails) {
                             csStatusBox.style.display = "block";
@@ -958,5 +978,175 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
+
+
+    // ==========================================
+    // TAB 11: MASTER QR CODE IMPORTER & REPLACER
+    // ==========================================
+    var txtQRFolder = document.getElementById("qrcode-folderpath");
+    var btnBrowseQRFolder = document.getElementById("btn-browse-qrfolder");
+    var lblQRFileCount = document.getElementById("qrcode-file-count");
+    var rbQRSel = document.getElementById("rb-qrcode-sel");
+    var chkQREmbed = document.getElementById("chk-qrcode-embed");
+    var btnQRScan = document.getElementById("btn-qrcode-scan");
+    var btnQRDialog = document.getElementById("btn-qrcode-dialog");
+    var btnQRApply = document.getElementById("btn-qrcode-apply");
+    var qrStatusBox = document.getElementById("qrcode-status-box");
+    var qrStatusHeading = document.getElementById("qrcode-status-heading");
+    var qrStatusDetails = document.getElementById("qrcode-status-details");
+
+    function getQRConfig() {
+        var folderPath = txtQRFolder ? txtQRFolder.value.trim() : "";
+        var scope = (rbQRSel && rbQRSel.checked) ? "selection" : "document";
+        var shouldEmbed = chkQREmbed ? chkQREmbed.checked : true;
+        return {
+            folderPath: folderPath,
+            scope: scope,
+            shouldEmbed: shouldEmbed
+        };
+    }
+
+    if (btnBrowseQRFolder) {
+        btnBrowseQRFolder.addEventListener("click", function () {
+            csInterface.evalScript("VectorToolkitHost.browseForQRFolder()", function (res) {
+                try {
+                    var data = JSON.parse(res);
+                    if (data.success && data.folderPath) {
+                        txtQRFolder.value = data.folderPath;
+                        if (lblQRFileCount) {
+                            lblQRFileCount.innerText = "✓ ফোল্ডারে মোট ইমেজ ফাইল: " + (data.fileCount || 0) + " টি";
+                            lblQRFileCount.style.color = "#81c784";
+                        }
+                    }
+                } catch (e) {}
+            });
+        });
+    }
+
+    if (btnQRDialog) {
+        btnQRDialog.addEventListener("click", function () {
+            csInterface.evalScript("VectorToolkitHost.launchReplaceQRCodeDialog()", function (res) {
+                try {
+                    var data = JSON.parse(res);
+                    if (!data.success && data.error) {
+                        showToast(data.error, "error");
+                    }
+                } catch (e) {}
+            });
+        });
+    }
+
+    if (btnQRScan) {
+        btnQRScan.addEventListener("click", function () {
+            var cfg = getQRConfig();
+            if (!cfg.folderPath) {
+                showToast("দয়া করে প্রথমে QR কোডের ফোল্ডার সিলেক্ট করুন।", "error");
+                return;
+            }
+
+            btnQRScan.disabled = true;
+            btnQRScan.innerText = "স্ক্যান হচ্ছে...";
+            if (qrStatusBox) qrStatusBox.style.display = "none";
+
+            csInterface.evalScript("VectorToolkitHost.scanQRCodes(" + JSON.stringify(JSON.stringify(cfg)) + ")", function (res) {
+                btnQRScan.disabled = false;
+                btnQRScan.innerText = "🔍 Scan & Match QRs";
+
+                try {
+                    var data = JSON.parse(res);
+                    if (data.success) {
+                        if (qrStatusBox && qrStatusHeading && qrStatusDetails) {
+                            qrStatusBox.style.display = "block";
+                            qrStatusBox.style.borderColor = "#00b0ff";
+                            qrStatusHeading.style.color = "#00e5ff";
+                            qrStatusHeading.innerText = "✓ মোট " + data.matchCount + " টি QR কোড ম্যাচ হয়েছে!";
+
+                            var html = "<strong>টার্গেট QR অবজেক্ট:</strong> " + data.targetCount + " টি | <strong>ইমেজ ফাইল:</strong> " + data.fileCount + " টি<br>" +
+                                "<div style='margin-top: 6px; max-height: 120px; overflow-y: auto; background: rgba(0,0,0,0.25); padding: 5px; border-radius: 3px;'>";
+
+                            if (data.preview && data.preview.length > 0) {
+                                for (var p = 0; p < data.preview.length; p++) {
+                                    html += "<div style='margin-bottom: 2px; font-family: monospace; font-size: 10px; color: #ff80ab;'>" +
+                                        data.preview[p] + "</div>";
+                                }
+                                if (data.matchCount > data.preview.length) {
+                                    html += "<div style='color: #888; font-style: italic;'>... এবং আরও " + (data.matchCount - data.preview.length) + " টি কার্ড ...</div>";
+                                }
+                            }
+                            html += "</div>";
+                            qrStatusDetails.innerHTML = html;
+                        }
+                        showToast("✓ মোট " + data.matchCount + " টি কার্ডের জন্য QR কোড প্রস্তুত!", "success");
+                    } else {
+                        if (qrStatusBox && qrStatusHeading && qrStatusDetails) {
+                            qrStatusBox.style.display = "block";
+                            qrStatusBox.style.borderColor = "#ff5252";
+                            qrStatusHeading.style.color = "#ff5252";
+                            qrStatusHeading.innerText = "⚠️ স্ক্যান সতর্কতা";
+                            qrStatusDetails.innerText = data.error || "কোনো QR কোড পাওয়া যায়নি।";
+                        }
+                        showToast(data.error || "কোনো QR কোড পাওয়া যায়নি।", "error");
+                    }
+                } catch (e) {
+                    if (qrStatusBox && qrStatusHeading && qrStatusDetails) {
+                        qrStatusBox.style.display = "block";
+                        qrStatusHeading.innerText = "Status";
+                        qrStatusDetails.innerText = "Response: " + res;
+                    }
+                }
+            });
+        });
+    }
+
+    if (btnQRApply) {
+        btnQRApply.addEventListener("click", function () {
+            var cfg = getQRConfig();
+            if (!cfg.folderPath) {
+                showToast("দয়া করে প্রথমে QR কোডের ফোল্ডার সিলেক্ট করুন।", "error");
+                return;
+            }
+
+            btnQRApply.disabled = true;
+            btnQRApply.innerText = "রিপ্লেস করা হচ্ছে...";
+            if (qrStatusBox) qrStatusBox.style.display = "none";
+
+            csInterface.evalScript("VectorToolkitHost.executeReplaceQRCodes(" + JSON.stringify(JSON.stringify(cfg)) + ")", function (res) {
+                btnQRApply.disabled = false;
+                btnQRApply.innerText = "⚡ Import & Replace QR Codes";
+
+                try {
+                    var data = JSON.parse(res);
+                    if (data.success) {
+                        if (qrStatusBox && qrStatusHeading && qrStatusDetails) {
+                            qrStatusBox.style.display = "block";
+                            qrStatusBox.style.borderColor = "#00e676";
+                            qrStatusHeading.style.color = "#00e676";
+                            qrStatusHeading.innerText = "✓ আলহামদুলিল্লাহ! " + data.count + " টি QR কোড নিখুঁতভাবে রিপ্লেস সম্পন্ন হয়েছে!";
+                            qrStatusDetails.innerHTML = "<strong>সর্বমোট রিপ্লেস:</strong> " + data.count + " of " + data.total + " টি কার্ড<br>" +
+                                "<span style='color: #81c784; font-size: 10px;'>✨ 0.5 in x 0.5 in সাইজে সেন্টার-এলাইন এবং " + (cfg.shouldEmbed ? "এমবেড" : "লিংকড") + " করা হয়েছে।</span><br>" +
+                                "<strong style='color: #00e5ff;'>Developed for Adobe Illustrator</strong>";
+                        }
+                        showToast("✓ সফলভাবে " + data.count + " টি QR কোড রিপ্লেস সম্পন্ন হয়েছে!", "success");
+                    } else {
+                        if (qrStatusBox && qrStatusHeading && qrStatusDetails) {
+                            qrStatusBox.style.display = "block";
+                            qrStatusBox.style.borderColor = "#ff5252";
+                            qrStatusHeading.style.color = "#ff5252";
+                            qrStatusHeading.innerText = "Notice";
+                            qrStatusDetails.innerText = data.error || "Could not replace QR codes.";
+                        }
+                        showToast(data.error || "Could not replace QR codes.", "error");
+                    }
+                } catch (e) {
+                    if (qrStatusBox && qrStatusHeading && qrStatusDetails) {
+                        qrStatusBox.style.display = "block";
+                        qrStatusHeading.innerText = "Status";
+                        qrStatusDetails.innerText = "Result: " + res;
+                    }
+                }
+            });
+        });
+    }
+
 
 });

@@ -60,10 +60,10 @@ var SystemPath = {
 
 CSInterface.prototype.getSystemPath = function(pathType) {
     var path = decodeURI(window.__adobe_cep__ ? window.__adobe_cep__.getSystemPath(pathType) : "");
-    var OSVersion = this.hostEnvironment ? this.hostEnvironment.OSVersion : "";
-    if (OSVersion.indexOf("Windows") >= 0) {
+    var OSVersion = (this.hostEnvironment && this.hostEnvironment.OSVersion) ? this.hostEnvironment.OSVersion : (navigator.platform || "");
+    if (OSVersion.indexOf("Windows") >= 0 || OSVersion.indexOf("Win") >= 0) {
         path = path.replace("file:///", "");
-    } else if (OSVersion.indexOf("Mac") >= 0) {
+    } else {
         path = path.replace("file://", "");
     }
     return path;

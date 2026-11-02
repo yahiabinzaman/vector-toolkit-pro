@@ -337,50 +337,97 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
     font-weight: bold;
 }
 
-/* Fixed Bottom Footer (Permanently Pinned) */
+/* Fixed Bottom Footer (Permanently Pinned, Professional Dark Theme) */
 .app-footer {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
     height: 32px;
-    background-color: #262626;
-    border-top: 1px solid #3e3e3e;
+    background: #1e1e1e;
+    border-top: 1px solid #333333;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    padding: 0 10px;
     z-index: 9999;
-    box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.footer-link {
-    color: #999999;
-    text-decoration: none;
-    font-size: 10.5px;
+.footer-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.footer-brand {
+    font-size: 10px;
+    font-weight: 600;
+    color: #888888;
+    letter-spacing: 0.2px;
+}
+
+.footer-badge {
+    font-size: 9px;
+    font-family: monospace;
+    background: #2b2b2b;
+    border: 1px solid #3a3a3a;
+    color: #00e5ff;
+    padding: 1px 5px;
+    border-radius: 3px;
+}
+
+.footer-right {
+    display: flex;
+    align-items: center;
+}
+
+.footer-author-btn {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    transition: all 0.15s ease;
+    gap: 5px;
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 3px 8px;
+    margin: 0;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 10px;
+    color: #a0a0a0;
     cursor: pointer;
+    outline: none;
+    transition: all 0.15s ease;
 }
 
-.footer-link:hover {
+.footer-author-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: #444444;
     color: #ffffff;
 }
 
-.author-name {
-    color: #f0f0f0;
-    font-weight: 700;
-    text-decoration: none;
+.footer-github-icon {
+    fill: currentColor;
+    opacity: 0.85;
+    vertical-align: middle;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.footer-author-btn:hover .footer-github-icon {
+    opacity: 1;
+    transform: scale(1.12);
+}
+
+.footer-dev-text {
+    font-size: 10px;
+}
+
+.footer-dev-text b {
+    color: #4a90e2;
+    font-weight: 600;
     transition: color 0.15s ease;
 }
 
-.footer-link:hover .author-name {
-    color: #ffffff;
+.footer-author-btn:hover .footer-dev-text b {
+    color: #64b5f6;
     text-decoration: underline;
-}
-
-
-
-    to { opacity: 1; transform: translateY(0) scale(1); }
 }

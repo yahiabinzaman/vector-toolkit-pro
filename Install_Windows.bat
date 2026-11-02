@@ -22,8 +22,9 @@ reg add "HKCU\Software\Adobe\CSXS.16" /v PlayerDebugMode /t REG_SZ /d "1" /f >nu
 
 if not exist "%APPDATA%\Adobe\CEP\extensions" mkdir "%APPDATA%\Adobe\CEP\extensions" >nul 2>&1
 if exist "%TARGET_DIR%" rmdir /s /q "%TARGET_DIR%" >nul 2>&1
+if not exist "%TARGET_DIR%" mkdir "%TARGET_DIR%" >nul 2>&1
 
-xcopy /E /I /Y /Q "%~dp0*" "%TARGET_DIR%" >nul 2>&1
+xcopy /E /I /Y /Q "%~dp0*" "%TARGET_DIR%\" >nul 2>&1
 
 echo ==========================================================
 echo  [SUCCESS] Vector Toolkit Pro installed successfully!

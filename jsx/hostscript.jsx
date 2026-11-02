@@ -1106,7 +1106,7 @@ var Bijoy2UnicodeEngine = (function () {
 
         // 6. Fix Unmapped ANSI residual tokens & ligatures
         // Sa + Ligatures (macron prefix: ¯' / ¯’ -> স্থ, ¯^ -> স্ব, ¯œ -> স্ন, ¯§ -> স্ম, ¯Í -> স্ত, ¯¿ -> স্ত্র)
-        s = s.replace(/[\xAF¯][\x27'’‘”\"ʻʼ`]/g, "\u09B8\u09CD\u09A5"); // ¯' / ¯’ -> স্থ
+        s = s.replace(/[\xAF¯][''’‘”\"ʻʼ`]/g, "\u09B8\u09CD\u09A5"); // ¯' / ¯’ -> স্থ
         s = s.replace(/[\xAF¯][\^\\^]/g, "\u09B8\u09CD\u09AC");         // ¯^ -> স্ব
         s = s.replace(/[\xAF¯]œ/g, "\u09B8\u09CD\u09A8");               // ¯œ -> স্ন
         s = s.replace(/[\xAF¯]§/g, "\u09B8\u09CD\u09AE");               // ¯§ -> স্ম
@@ -1129,7 +1129,7 @@ var Bijoy2UnicodeEngine = (function () {
         s = s.replace(/[\u09AE\u09AE\u09CD]্?[\-\^]([\u09AC\u09A8])/g, "\u09AE\u09CD\u09AC$1");
 
         // 7. Fix Apostrophe / Quote before Kar Transposition (e.g., ক’াবায় -> কা’বায়, ক’াবাকে -> কা’বাকে, দ’ুআ -> দু’আ)
-        s = s.replace(/([\u0985-\u09B9\u09DC-\u09DF])([’\x27\"“”\u2018\u2019\u201C\u201D\u02BC\u02BB])([\u09BE-\u09CC\u09D7])/g, "$1$3$2");
+        s = s.replace(/([\u0985-\u09B9\u09DC-\u09DF])([’'\"“”\u2018\u2019\u201C\u201D\u02BC\u02BB])([\u09BE-\u09CC\u09D7])/g, "$1$3$2");
 
         // 8. Duplicate Kars (typos like াা, িি, ুু, েে)
         s = s.replace(/\u09BE\u09BE+/g, "\u09BE");
@@ -1148,7 +1148,7 @@ var Bijoy2UnicodeEngine = (function () {
         s = s.replace(/\u09B0\u09AE\u09CD[\u09B0\u09A8]/g, "\u09B0\u09C1");
 
         // Khanda-Ta fix: ত্ at end of word or before space/punctuation -> ৎ
-        s = s.replace(/\u09A4\u09CD(?=[\s\.,;:!\?\"\x27\-\(\)\[\]\{\}\/\\।\n\r]|$)/g, "\u09CE");
+        s = s.replace(/\u09A4\u09CD(?=[\s\.,;:!\?\"'\-\(\)\[\]\{\}\/\\।\n\r]|$)/g, "\u09CE");
         
         // Classic Book Typo Refinements
         s = s.replace(/\u0986\u09B2\u09B8\u09CD\u09A8\u09BE\u09B9/g, "\u0986\u09B2\u09CD\u09B2\u09BE\u09B9"); // আলস্নাহ -> আল্লাহ
@@ -1166,9 +1166,9 @@ var Bijoy2UnicodeEngine = (function () {
         s = s.replace(/\u09B8\u09B0\u09CD\u09AC\u09B8\u09CD\u09A5\u09BE\u09DF/g, "\u09B8\u09B0\u09CD\u09AC\u09BE\u09AC\u09B8\u09CD\u09A5\u09BE\u09DF"); // সর্বস্থায় -> সর্বাবস্থায়
         
         // Common Typist Loan-Word & Spelling Auto-Fixes
-        s = s.replace(/দ[’\x27\u2018\u2019]আ/g, "দু’আ"); // দ’আ -> দু’আ
-        s = s.replace(/ক[’\x27\u2018\u2019]াবা/g, "কা’বা"); // ক’াবা -> কা’বা
-        s = s.replace(/অব[’\x27\u2018\u2019]ায়/g, "অবস্থায়");
+        s = s.replace(/দ[’'\u2018\u2019]আ/g, "দু’আ"); // দ’আ -> দু’আ
+        s = s.replace(/ক[’'\u2018\u2019]াবা/g, "কা’বা"); // ক’াবা -> কা’বা
+        s = s.replace(/অব[’'\u2018\u2019]ায়/g, "অবস্থায়");
         s = s.replace(/অব¯’ায়/g, "অবস্থায়");
         s = s.replace(/আক্রোমণ/g, "আক্রমণ");
         s = s.replace(/মূহূর্ত/g, "মুহূর্ত");
@@ -1179,7 +1179,7 @@ var Bijoy2UnicodeEngine = (function () {
 
         // 10. Halant and diacritic cleanup
         s = s.replace(/\u09CD\u09CD+/g, "\u09CD");
-        s = s.replace(/\u09CD+(?=[\s\.,;:!\?\"\x27\-\(\)\[\]\{\}\/\\।\n\r]|$)/g, "");
+        s = s.replace(/\u09CD+(?=[\s\.,;:!\?\"'\-\(\)\[\]\{\}\/\\।\n\r]|$)/g, "");
         s = s.replace(/([\u09BE-\u09CC\u09D7])\u09CD+/g, "$1");
 
         return s;
@@ -1189,10 +1189,10 @@ var Bijoy2UnicodeEngine = (function () {
     function refineUnicodeText(s) {
         if (!s) return "";
         // 1. Broken word specific fixes BEFORE any general regex
-        s = s.replace(/অব[’\x27\u2018\u2019\u02BC\u02BB]?[◌\u25CC]?ায়/g, "অবস্থায়");
-        s = s.replace(/অব[¯\xAF][’\x27\u2018\u2019\u02BC\u02BB]?ায়/g, "অবস্থায়");
+        s = s.replace(/অব[’'\u2018\u2019\u02BC\u02BB]?[◌\u25CC]?ায়/g, "অবস্থায়");
+        s = s.replace(/অব[¯\xAF][’'\u2018\u2019\u02BC\u02BB]?ায়/g, "অবস্থায়");
         s = s.replace(/অব[¯\xAF]ায়/g, "অবস্থায়");
-        s = s.replace(/অবা[’\x27\u2018\u2019\u02BC\u02BB]য়/g, "অবস্থায়");
+        s = s.replace(/অবা[’'\u2018\u2019\u02BC\u02BB]য়/g, "অবস্থায়");
 
         // 2. Ma-ligature (ম্ব / ম্ন) unmapped and broken typist forms
         s = s.replace(/গ[¤\xA4][\^\\^]?[◌\u25CC]?ু?জ/g, "গম্বুজ");
@@ -1216,7 +1216,7 @@ var Bijoy2UnicodeEngine = (function () {
         s = s.replace(/[¤\xA4]/g, "\u09AE\u09CD");
 
         // 3. Unmapped ANSI ligatures
-        s = s.replace(/[\xAF¯][\x27'’‘”\"ʻʼ`]/g, "\u09B8\u09CD\u09A5"); // ¯' / ¯’ -> স্থ
+        s = s.replace(/[\xAF¯][''’‘”\"ʻʼ`]/g, "\u09B8\u09CD\u09A5"); // ¯' / ¯’ -> স্থ
         s = s.replace(/[\xAF¯][\^\\^]/g, "\u09B8\u09CD\u09AC");         // ¯^ -> স্ব
         s = s.replace(/[\xAF¯]œ/g, "\u09B8\u09CD\u09A8");               // ¯œ -> স্ন
         s = s.replace(/[\xAF¯]§/g, "\u09B8\u09CD\u09AE");               // ¯§ -> স্ম
@@ -1232,15 +1232,15 @@ var Bijoy2UnicodeEngine = (function () {
 
         // 5. Loan-word apostrophe fixes
         s = s.replace(/তাঁ['’]র/g, "তাঁর");
-        s = s.replace(/দ[’\x27\u2018\u2019][◌\u25CC]?ু?আ/g, "দু’আ");
-        s = s.replace(/ক[’\x27\u2018\u2019][◌\u25CC]?া?বা/g, "কা’বা");
+        s = s.replace(/দ[’'\u2018\u2019][◌\u25CC]?ু?আ/g, "দু’আ");
+        s = s.replace(/ক[’'\u2018\u2019][◌\u25CC]?া?বা/g, "কা’বা");
         s = s.replace(/মূহূর্ত/g, "মুহূর্ত");
         s = s.replace(/মূহুর্ত/g, "মুহূর্ত");
         s = s.replace(/ব্যতিত/g, "ব্যতীত");
         s = s.replace(/সংগৃহিত/g, "সংগৃহীত");
 
         // 6. Dotted Circle & Quote Transposition
-        s = s.replace(/([\u0985-\u09B9\u09DC-\u09DF])([’\x27\"“”\u2018\u2019\u201C\u201D\u02BC\u02BB])([\u09BE-\u09CC\u09D7])/g, "$1$3$2");
+        s = s.replace(/([\u0985-\u09B9\u09DC-\u09DF])([’'\"“”\u2018\u2019\u201C\u201D\u02BC\u02BB])([\u09BE-\u09CC\u09D7])/g, "$1$3$2");
 
         // 7. Remove any leftover dotted circles
         s = s.replace(/[\u25CC◌]/g, "");
@@ -2864,7 +2864,17 @@ var VectorToolkitHost = {
     },
 
     // ========================================================
-    // TAB 10: SMART CARD SERIAL NUMBER AUTO-FILLER ENGINE
+    // TAB 10: NUMBERING PRO (CARD NUMBERING PRO ENGINE)
+    // Specially designed for auto-numbering cards & badges:
+    // 1. Automatically finds card number badges / text frames across artboards or selection.
+    // 2. Fixes duplicate numbers (e.g. copied template with '1' on all cards).
+    // 3. Fixes broken / jumped sequences (e.g. 1-8 correct, then jumps to 12-16).
+    // 4. Arranges 100+ cards into perfect sequential order in 1 click!
+    // 5. Orders cards across artboards in natural grid reading order:
+    //      Row-by-Row: 1 - 2, 3 - 4, 5 - 6 ...
+    //      Column-by-Column: 1 - 5, 2 - 6 ...
+    // 6. Supports Unicode Bengali (১, ২, ৩... ১০০), ANSI SutonnyMJ, and English.
+    // 7. Strictly preserves font, size, leading, tracking, color, and center alignment.
     // ========================================================
     _isItemSafeAndVisible: function (item) {
         if (!item) return false;
@@ -2881,102 +2891,149 @@ var VectorToolkitHost = {
         }
     },
 
-    _testSerialTextFrame: function (tf, placeholder) {
-        if (!tf || tf.typename !== "TextFrame") return false;
+    _testCardSerialTF: function (tf, cardBounds, customPlaceholder) {
+        if (!tf || tf.typename !== "TextFrame") return { valid: false, score: 0 };
         var txt = "";
         try {
             txt = tf.contents ? tf.contents.replace(/^\s+|\s+$/g, "") : "";
         } catch (e) {
-            return false;
+            return { valid: false, score: 0 };
         }
-        if (!txt) return false;
+        if (!txt || txt.length === 0) return { valid: false, score: 0 };
 
-        // Custom or direct match
-        if (placeholder && placeholder.length > 0) {
-            if (txt === placeholder) return true;
-            if (placeholder === "00" && (txt === "00" || txt === "\u09E6\u09E6")) return true;
-            if (placeholder === "\u09E6\u09E6" && (txt === "00" || txt === "\u09E6\u09E6")) return true;
-        }
-
-        // Must NOT be multiline or long text
-        if (txt.indexOf("\r") !== -1 || txt.indexOf("\n") !== -1) return false;
+        // Exclude multi-line texts
+        if (txt.indexOf("\r") !== -1 || txt.indexOf("\n") !== -1) return { valid: false, score: 0 };
         try {
-            if (tf.lines && tf.lines.length > 1) return false;
+            if (tf.lines && tf.lines.length > 1) return { valid: false, score: 0 };
         } catch (le) {}
 
-        // Phone numbers (>= 7 digits) reject
-        if (txt.replace(/\D/g, "").length >= 7) return false;
-        if (txt.replace(/[^০-৯]/g, "").length >= 7) return false;
+        // Exclude typical biodata keywords
+        if (/(?:নাম|পিতা|মাতা|গ্রাম|ডাক|পোস্ট|থানা|উপজেলা|জেলা|মোবাইল|ফোন|রক্ত|গ্রুপ|হিফ[জয]|কুরআন|মাদরাসা|মাদ্রাসা|বিভাগ|রোল|দাখেলা|ফরম|Form|Roll)/i.test(txt)) {
+            return { valid: false, score: 0 };
+        }
 
-        // Years (e.g. 2026, 2027, 1447, ২০২৬) reject
-        if (/^(?:19|20)\d\d$/.test(txt) || /^(?:১৪|১৫)[০-৯]{2}$/.test(txt) || /^(?:২০|১৯)[০-৯]{2}$/.test(txt)) return false;
+        // Exclude phone numbers (7 or more digits)
+        var engDigits = txt.replace(/\D/g, "");
+        var bngDigits = txt.replace(/[^০-৯]/g, "");
+        if (engDigits.length >= 7 || bngDigits.length >= 7) {
+            return { valid: false, score: 0 };
+        }
 
-        // Bengali labels reject
-        if (/(?:মোবাইল|পিতা|গ্রাম|গ্রেড|রোল|নাম|ঠিকানা|বিভাগ|হিফয|কুরআন)/i.test(txt)) return false;
+        // Exclude 4-digit years (e.g. 2024, 2025, 2026, 2027, 1445, 1446)
+        if (/^(?:19|20)\d\d$/.test(txt) || /^(?:১৪|১৫)[০-৯]{2}$/.test(txt) || /^(?:২০|১৯)[০-৯]{2}$/.test(txt)) {
+            return { valid: false, score: 0 };
+        }
 
-        // Placeholder matching "00", "০০", single/triple zeros, or 1-3 digits
-        if (/^(?:00|\u09E6\u09E6|0|\u09E6|000|\u09E6\u09E6\u09E6|#|\u09A8\u0982|sl)$/i.test(txt)) return true;
-        if (/^[০-৯0-9]{1,3}$/.test(txt)) return true;
+        // Serial numbers are short: 1 to 5 characters max
+        if (txt.length > 5) return { valid: false, score: 0 };
 
-        return false;
+        var score = 10;
+
+        // Custom placeholder match (if specified and not empty / "auto")
+        if (customPlaceholder && customPlaceholder.length > 0 && customPlaceholder.toLowerCase() !== "auto") {
+            if (txt === customPlaceholder) score += 60;
+            if ((customPlaceholder === "00" || customPlaceholder === "\u09E6\u09E6") && (txt === "00" || txt === "\u09E6\u09E6")) score += 60;
+        }
+
+        // Pure digits get very high priority
+        var isAllDigits = /^[0-9]+$/.test(txt) || /^[০-৯]+$/.test(txt);
+        if (isAllDigits) score += 40;
+
+        // Known serial number tokens or placeholders
+        if (/^(?:00|0|000|০০|০|০০০|#|sl|নং|১|1)$/i.test(txt)) score += 30;
+
+        // Spatial position relative to card boundaries
+        if (cardBounds) {
+            try {
+                var tfgb = tf.geometricBounds;
+                var cardW = Math.max(1, Math.abs(cardBounds[2] - cardBounds[0]));
+                var cardH = Math.max(1, Math.abs(cardBounds[1] - cardBounds[3]));
+
+                var relX = (tfgb[0] - cardBounds[0]) / cardW;
+                var relY = (cardBounds[1] - tfgb[1]) / cardH;
+
+                // In card designs, serial badges are at the bottom or bottom-right
+                if (relY > 0.50) score += 30;
+                if (relY > 0.70) score += 40; // close to bottom edge
+                if (relX > 0.40) score += 20;
+                if (relX > 0.60) score += 30; // bottom-right badge position
+            } catch (spErr) {}
+        }
+
+        // Check text frame dimensions (serial badges are small)
+        try {
+            var tgb = tf.geometricBounds;
+            var tw = Math.abs(tgb[2] - tgb[0]);
+            var th = Math.abs(tgb[1] - tgb[3]);
+            if (tw < 75 && th < 55) score += 20;
+        } catch (dimErr) {}
+
+        return { valid: (score >= 40), score: score };
     },
 
-    _collectAllSubTextFrames: function (item, outArr) {
-        if (!item || !this._isItemSafeAndVisible(item)) return;
-        if (item.typename === "TextFrame") {
-            outArr.push(item);
+    _collectAllSubTextFrames: function (container, outArr) {
+        if (!container || !this._isItemSafeAndVisible(container)) return;
+        if (container.typename === "TextFrame") {
+            outArr.push(container);
             return;
         }
-        if (item.typename === "GroupItem" || item.pageItems) {
-            for (var i = 0; i < item.pageItems.length; i++) {
-                this._collectAllSubTextFrames(item.pageItems[i], outArr);
+        if (container.typename === "GroupItem" || container.pageItems) {
+            for (var i = 0; i < container.pageItems.length; i++) {
+                this._collectAllSubTextFrames(container.pageItems[i], outArr);
             }
         }
     },
 
     _detectCardSerialsInternal: function (config) {
-        if (app.documents.length === 0) return { error: "No active document found in Illustrator." };
+        if (app.documents.length === 0) return { error: "❌ কোনো ইলাস্ট্রেটর ডকুমেন্ট খোলা নেই!\nঅনুগ্রহ করে প্রথমে আপনার কার্ডের ফাইলটি ওপেন করুন।" };
         var doc = app.activeDocument;
         var numABs = doc.artboards.length;
         var activeABIdx = doc.artboards.getActiveArtboardIndex();
 
         var scope = config.scope || "all_artboards";
         var order = config.order || "row";
-        var placeholder = config.placeholder || "00";
+        var placeholder = config.placeholder || "";
         var startNum = parseInt(config.startNum, 10);
         if (isNaN(startNum)) startNum = 1;
         var padDigits = parseInt(config.padding, 10);
-        if (isNaN(padDigits)) padDigits = 2;
-        var digitLang = config.digitLang || "auto";
+        if (isNaN(padDigits)) padDigits = 1;
+        var digitLang = config.digitLang || "bn";
         var prefix = config.prefix || "";
         var suffix = config.suffix || "";
 
-        var abFilter = null;
-        if (scope === "artboard") {
-            abFilter = activeABIdx;
-        }
+        var targetAB = (scope === "artboard" || scope === "active_artboard") ? activeABIdx : null;
 
         function getArtboardIndexForBounds(gb) {
             if (!gb || numABs === 0) return 0;
             var midX = (gb[0] + gb[2]) / 2;
             var midY = (gb[1] + gb[3]) / 2;
+            var closestAB = 0;
+            var minDist = 999999999;
+
             for (var a = 0; a < numABs; a++) {
                 var r = doc.artboards[a].artboardRect;
                 if (midX >= r[0] && midX <= r[2] && midY <= r[1] && midY >= r[3]) {
                     return a;
                 }
+                var abCenterX = (r[0] + r[2]) / 2;
+                var abCenterY = (r[1] + r[3]) / 2;
+                var d = (midX - abCenterX) * (midX - abCenterX) + (midY - abCenterY) * (midY - abCenterY);
+                if (d < minDist) {
+                    minDist = d;
+                    closestAB = a;
+                }
             }
-            return 0;
+            return closestAB;
         }
 
-        var detectedUnits = [];
-        var attachedTFSet = {};
+        var detected = [];
+        var attachedTF = {};
 
-        // 1. If Selection scope
+        // Scope 1: Selection
         if (scope === "selection") {
             var sel = doc.selection;
             if (!sel || sel.length === 0) {
-                return { error: "Please select cards or text frames first, or choose 'All Artboards'." };
+                return { error: "❌ কোনো কার্ড বা অবজেক্ট সিলেক্ট করা নেই!\nঅনুগ্রহ করে কার্ড সিলেক্ট করুন অথবা 'All Artboards' অপশনটি বেছে নিন।" };
             }
 
             for (var s = 0; s < sel.length; s++) {
@@ -2984,54 +3041,55 @@ var VectorToolkitHost = {
                 if (!this._isItemSafeAndVisible(sItem)) continue;
 
                 if (sItem.typename === "GroupItem") {
-                    var gTfs = [];
-                    this._collectAllSubTextFrames(sItem, gTfs);
-                    var bestTF = null, bestScore = -1;
-                    var gBounds = sItem.geometricBounds;
-                    var gW = Math.abs(gBounds[2] - gBounds[0]);
-                    var gH = Math.abs(gBounds[1] - gBounds[3]);
+                    var sgb = sItem.geometricBounds;
+                    var sTfs = [];
+                    this._collectAllSubTextFrames(sItem, sTfs);
+                    var bestTF = null;
+                    var bestScore = -1;
 
-                    for (var t = 0; t < gTfs.length; t++) {
-                        var tf = gTfs[t];
-                        if (this._testSerialTextFrame(tf, placeholder)) {
-                            var ttxt = tf.contents.replace(/^\s+|\s+$/g, "");
-                            var sc = 10;
-                            if (ttxt === placeholder || ttxt === "00" || ttxt === "\u09E6\u09E6") sc += 50;
-                            var tfgb = tf.geometricBounds;
-                            var relX = (tfgb[0] - gBounds[0]) / Math.max(1, gW);
-                            var relY = (gBounds[1] - tfgb[1]) / Math.max(1, gH);
-                            if (relX > 0.4) sc += 20;
-                            if (relY > 0.4) sc += 20;
-                            if (sc > bestScore) {
-                                bestScore = sc;
-                                bestTF = tf;
-                            }
+                    for (var t = 0; t < sTfs.length; t++) {
+                        var tf = sTfs[t];
+                        var testRes = this._testCardSerialTF(tf, sgb, placeholder);
+                        if (testRes.valid && testRes.score > bestScore) {
+                            bestScore = testRes.score;
+                            bestTF = tf;
                         }
                     }
+
                     if (bestTF) {
-                        detectedUnits.push({
-                            cardItem: sItem,
+                        detected.push({
+                            card: sItem,
                             textFrame: bestTF,
-                            bounds: sItem.geometricBounds,
-                            artboardIndex: getArtboardIndexForBounds(sItem.geometricBounds)
+                            bounds: sgb,
+                            centerX: (sgb[0] + sgb[2]) / 2,
+                            centerY: (sgb[1] + sgb[3]) / 2,
+                            width: Math.abs(sgb[2] - sgb[0]),
+                            height: Math.abs(sgb[1] - sgb[3]),
+                            artboardIndex: getArtboardIndexForBounds(sgb)
                         });
-                        attachedTFSet[bestTF] = true;
+                        attachedTF[bestTF] = true;
                     }
                 } else if (sItem.typename === "TextFrame") {
-                    if (this._testSerialTextFrame(sItem, placeholder)) {
-                        detectedUnits.push({
-                            cardItem: sItem,
+                    var tgb = sItem.geometricBounds;
+                    var tRes = this._testCardSerialTF(sItem, null, placeholder);
+                    if (tRes.valid) {
+                        detected.push({
+                            card: sItem,
                             textFrame: sItem,
-                            bounds: sItem.geometricBounds,
-                            artboardIndex: getArtboardIndexForBounds(sItem.geometricBounds)
+                            bounds: tgb,
+                            centerX: (tgb[0] + tgb[2]) / 2,
+                            centerY: (tgb[1] + tgb[3]) / 2,
+                            width: Math.abs(tgb[2] - tgb[0]),
+                            height: Math.abs(tgb[1] - tgb[3]),
+                            artboardIndex: getArtboardIndexForBounds(tgb)
                         });
-                        attachedTFSet[sItem] = true;
+                        attachedTF[sItem] = true;
                     }
                 }
             }
         } else {
-            // Document or Artboard scope:
-            // Pass A: Inspect groups on active layers
+            // Scope 2: All Artboards or Active Artboard
+            // Phase 1: Scan for Card Groups
             for (var l = 0; l < doc.layers.length; l++) {
                 var lyr = doc.layers[l];
                 if (!lyr.visible || lyr.locked) continue;
@@ -3041,124 +3099,114 @@ var VectorToolkitHost = {
                     if (!this._isItemSafeAndVisible(pItem)) continue;
 
                     if (pItem.typename === "GroupItem") {
-                        var gb = pItem.geometricBounds;
-                        var w = Math.abs(gb[2] - gb[0]);
-                        var h = Math.abs(gb[1] - gb[3]);
-                        if (w > 650 && h > 650) continue;
+                        var cgb = pItem.geometricBounds;
+                        var cW = Math.abs(cgb[2] - cgb[0]);
+                        var cH = Math.abs(cgb[1] - cgb[3]);
 
-                        var itemAb = getArtboardIndexForBounds(gb);
-                        if (abFilter !== null && itemAb !== abFilter) continue;
+                        // Exclude gigantic artboard-sized wrapper groups or tiny icon groups
+                        if (cW > 600 && cH > 600) continue;
+                        if (cW < 60 || cH < 30) continue;
+
+                        var itemAB = getArtboardIndexForBounds(cgb);
+                        if (targetAB !== null && itemAB !== targetAB) continue;
 
                         var gTfs = [];
                         this._collectAllSubTextFrames(pItem, gTfs);
-                        if (gTfs.length === 0) continue;
+                        var gBestTF = null;
+                        var gBestScore = -1;
 
-                        var bestTF = null, bestScore = -1;
-                        for (var t = 0; t < gTfs.length; t++) {
-                            var tf = gTfs[t];
-                            if (this._testSerialTextFrame(tf, placeholder)) {
-                                var ttxt = tf.contents.replace(/^\s+|\s+$/g, "");
-                                var sc = 10;
-                                if (ttxt === placeholder || ttxt === "00" || ttxt === "\u09E6\u09E6") sc += 50;
-                                var tfgb = tf.geometricBounds;
-                                var relX = (tfgb[0] - gb[0]) / Math.max(1, w);
-                                var relY = (gb[1] - tfgb[1]) / Math.max(1, h);
-                                if (relX > 0.4) sc += 20;
-                                if (relY > 0.4) sc += 20;
-                                if (sc > bestScore) {
-                                    bestScore = sc;
-                                    bestTF = tf;
-                                }
+                        for (var gt = 0; gt < gTfs.length; gt++) {
+                            var gtf = gTfs[gt];
+                            var gRes = this._testCardSerialTF(gtf, cgb, placeholder);
+                            if (gRes.valid && gRes.score > gBestScore) {
+                                gBestScore = gRes.score;
+                                gBestTF = gtf;
                             }
                         }
 
-                        if (bestTF) {
-                            detectedUnits.push({
-                                cardItem: pItem,
-                                textFrame: bestTF,
-                                bounds: gb,
-                                artboardIndex: itemAb
+                        if (gBestTF) {
+                            detected.push({
+                                card: pItem,
+                                textFrame: gBestTF,
+                                bounds: cgb,
+                                centerX: (cgb[0] + cgb[2]) / 2,
+                                centerY: (cgb[1] + cgb[3]) / 2,
+                                width: cW,
+                                height: cH,
+                                artboardIndex: itemAB
                             });
-                            attachedTFSet[bestTF] = true;
+                            attachedTF[gBestTF] = true;
                         }
                     }
                 }
             }
 
-            // Pass B: Fallback for loose TextFrames or badges sitting outside groups
+            // Phase 2: Fallback for loose or unattached serial number TextFrames
             for (var dt = 0; dt < doc.textFrames.length; dt++) {
                 var dtf = doc.textFrames[dt];
-                if (!this._isItemSafeAndVisible(dtf)) continue;
-                if (attachedTFSet[dtf]) continue;
+                if (!this._isItemSafeAndVisible(dtf) || attachedTF[dtf]) continue;
 
                 var dgb = dtf.geometricBounds;
                 var dw = Math.abs(dgb[2] - dgb[0]);
                 var dh = Math.abs(dgb[1] - dgb[3]);
                 if (dw > 85 || dh > 55) continue;
 
-                var dAb = getArtboardIndexForBounds(dgb);
-                if (abFilter !== null && dAb !== abFilter) continue;
+                var dAB = getArtboardIndexForBounds(dgb);
+                if (targetAB !== null && dAB !== targetAB) continue;
 
-                if (this._testSerialTextFrame(dtf, placeholder)) {
-                    detectedUnits.push({
-                        cardItem: dtf,
+                var dRes = this._testCardSerialTF(dtf, null, placeholder);
+                if (dRes.valid && dRes.score >= 50) {
+                    detected.push({
+                        card: dtf,
                         textFrame: dtf,
                         bounds: dgb,
-                        artboardIndex: dAb
+                        centerX: (dgb[0] + dgb[2]) / 2,
+                        centerY: (dgb[1] + dgb[3]) / 2,
+                        width: dw,
+                        height: dh,
+                        artboardIndex: dAB
                     });
-                    attachedTFSet[dtf] = true;
+                    attachedTF[dtf] = true;
                 }
             }
         }
 
-        if (detectedUnits.length === 0) {
+        if (detected.length === 0) {
             return {
-                error: "No card serial numbers or matching '00' / '০০' frames were found! Please check that cards are unlocked and visible."
+                error: "❌ কোনো কার্ডের সিরিয়াল নম্বর শনাক্ত করা যায়নি!\n\nপরামর্শ:\n1. কার্ডগুলো সিলেক্ট করে 'Selected Cards' দিয়ে চেষ্টা করুন।\n2. অথবা নিশ্চিত করুন কার্ডের নিচের নম্বরের টেক্সট ফ্রেমটি লক বা হাইড করা নেই।"
             };
         }
 
-        // Cluster and Sort by Artboard:
+        // Group by Artboard
         var byAB = {};
-        for (var u = 0; u < detectedUnits.length; u++) {
-            var unit = detectedUnits[u];
-            var abId = unit.artboardIndex;
-            if (!byAB[abId]) byAB[abId] = [];
-            byAB[abId].push(unit);
-        }
-
-        var abListKeys = [];
-        for (var k in byAB) {
-            if (byAB.hasOwnProperty(k)) abListKeys.push(parseInt(k, 10));
-        }
-        abListKeys.sort(function(a, b) { return a - b; });
-
-        var finalSorted = [];
-
-        for (var ak = 0; ak < abListKeys.length; ak++) {
-            var currentABItems = byAB[abListKeys[ak]];
-            if (currentABItems.length === 0) continue;
-
-            for (var ci = 0; ci < currentABItems.length; ci++) {
-                var cItem = currentABItems[ci];
-                var cB = cItem.bounds;
-                cItem.centerX = (cB[0] + cB[2]) / 2;
-                cItem.centerY = (cB[1] + cB[3]) / 2;
-                cItem.width = Math.abs(cB[2] - cB[0]);
-                cItem.height = Math.abs(cB[1] - cB[3]);
+        var abKeys = [];
+        for (var i = 0; i < detected.length; i++) {
+            var ab = detected[i].artboardIndex;
+            if (!byAB[ab]) {
+                byAB[ab] = [];
+                abKeys.push(ab);
             }
+            byAB[ab].push(detected[i]);
+        }
+        abKeys.sort(function(a, b) { return a - b; });
+
+        var sortedResult = [];
+
+        for (var k = 0; k < abKeys.length; k++) {
+            var abItems = byAB[abKeys[k]];
 
             if (order === "column") {
-                // Column by Column
+                // Column-by-Column: Col 1 (top to bottom), Col 2 (top to bottom)...
+                abItems.sort(function(a, b) { return a.centerX - b.centerX; });
                 var cols = [];
-                for (var ci = 0; ci < currentABItems.length; ci++) {
-                    var item = currentABItems[ci];
+                for (var ci = 0; ci < abItems.length; ci++) {
+                    var itm = abItems[ci];
                     var placed = false;
                     for (var c = 0; c < cols.length; c++) {
                         var col = cols[c];
-                        var xDiff = Math.abs(item.centerX - col.avgX);
-                        var colW = col.avgW || 100;
-                        if (xDiff < Math.max(35, colW * 0.45)) {
-                            col.items.push(item);
+                        var thresh = Math.max(30, col.avgW * 0.45);
+                        if (Math.abs(itm.centerX - col.avgX) <= thresh) {
+                            col.items.push(itm);
                             var sumX = 0, sumW = 0;
                             for (var m = 0; m < col.items.length; m++) {
                                 sumX += col.items[m].centerX;
@@ -3171,48 +3219,48 @@ var VectorToolkitHost = {
                         }
                     }
                     if (!placed) {
-                        cols.push({ avgX: item.centerX, avgW: item.width, items: [item] });
+                        cols.push({ avgX: itm.centerX, avgW: itm.width, items: [itm] });
                     }
                 }
                 cols.sort(function(a, b) { return a.avgX - b.avgX; });
                 for (var c = 0; c < cols.length; c++) {
                     cols[c].items.sort(function(a, b) { return b.centerY - a.centerY; });
                     for (var r = 0; r < cols[c].items.length; r++) {
-                        finalSorted.push(cols[c].items[r]);
+                        sortedResult.push(cols[c].items[r]);
                     }
                 }
             } else {
-                // Row-by-Row (Horizontal Grid: 01-02, 03-04...)
+                // Default: Row-by-Row: 1 - 2, 3 - 4, 5 - 6 ...
+                abItems.sort(function(a, b) { return b.centerY - a.centerY; });
                 var rows = [];
-                for (var ci = 0; ci < currentABItems.length; ci++) {
-                    var item = currentABItems[ci];
-                    var placed = false;
+                for (var ri = 0; ri < abItems.length; ri++) {
+                    var rItem = abItems[ri];
+                    var rPlaced = false;
                     for (var r = 0; r < rows.length; r++) {
                         var row = rows[r];
-                        var yDiff = Math.abs(item.centerY - row.avgY);
-                        var rowH = row.avgH || 60;
-                        if (yDiff < Math.max(30, rowH * 0.45)) {
-                            row.items.push(item);
+                        var rThresh = Math.max(25, row.avgH * 0.45);
+                        if (Math.abs(rItem.centerY - row.avgY) <= rThresh) {
+                            row.items.push(rItem);
                             var sumY = 0, sumH = 0;
-                            for (var m = 0; m < row.items.length; m++) {
-                                sumY += row.items[m].centerY;
-                                sumH += row.items[m].height;
+                            for (var rm = 0; rm < row.items.length; rm++) {
+                                sumY += row.items[rm].centerY;
+                                sumH += row.items[rm].height;
                             }
                             row.avgY = sumY / row.items.length;
                             row.avgH = sumH / row.items.length;
-                            placed = true;
+                            rPlaced = true;
                             break;
                         }
                     }
-                    if (!placed) {
-                        rows.push({ avgY: item.centerY, avgH: item.height, items: [item] });
+                    if (!rPlaced) {
+                        rows.push({ avgY: rItem.centerY, avgH: rItem.height, items: [rItem] });
                     }
                 }
                 rows.sort(function(a, b) { return b.avgY - a.avgY; });
                 for (var r = 0; r < rows.length; r++) {
                     rows[r].items.sort(function(a, b) { return a.centerX - b.centerX; });
-                    for (var c = 0; c < rows[r].items.length; c++) {
-                        finalSorted.push(rows[r].items[c]);
+                    for (var rc = 0; rc < rows[r].items.length; rc++) {
+                        sortedResult.push(rows[r].items[rc]);
                     }
                 }
             }
@@ -3220,8 +3268,8 @@ var VectorToolkitHost = {
 
         var bnDigits = ['\u09E6', '\u09E7', '\u09E8', '\u09E9', '\u09EA', '\u09EB', '\u09EC', '\u09ED', '\u09EE', '\u09EF'];
 
-        function formatNumber(numVal, padLen, langMode, tf) {
-            var str = String(numVal);
+        function formatCardNumber(num, padLen, styleMode, tf) {
+            var str = String(num);
             while (str.length < padLen) {
                 str = "0" + str;
             }
@@ -3235,25 +3283,24 @@ var VectorToolkitHost = {
 
             var isSutonny = /sutonny/i.test(fontName);
 
-            var useBn = false;
-            if (langMode === "bn") {
-                useBn = true;
-            } else if (langMode === "en") {
-                useBn = false;
+            var useBengali = false;
+            if (styleMode === "bn") {
+                useBengali = true;
+            } else if (styleMode === "en" || styleMode === "eng") {
+                useBengali = false;
             } else {
                 var cur = tf ? (tf.contents || "") : "";
-                if (/[\u09E6-\u09EF]/.test(cur) || /bornomala|kalpurush|solaiman|siyam/i.test(fontName)) {
-                    useBn = true;
-                } else {
-                    useBn = false;
+                if (/[\u09E6-\u09EF]/.test(cur) || /bornomala|kalpurush|solaiman|siyam|bangla/i.test(fontName)) {
+                    useBengali = true;
                 }
             }
 
+            // SutonnyMJ Safety: ASCII digits produce Bengali glyphs in SutonnyMJ
             if (isSutonny) {
                 return str;
             }
 
-            if (useBn) {
+            if (useBengali) {
                 var res = "";
                 for (var i = 0; i < str.length; i++) {
                     var ch = str.charAt(i);
@@ -3270,14 +3317,14 @@ var VectorToolkitHost = {
         }
 
         return {
-            items: finalSorted,
+            items: sortedResult,
             startNum: startNum,
             padDigits: padDigits,
             digitLang: digitLang,
             prefix: prefix,
             suffix: suffix,
-            formatNumber: formatNumber,
-            artboardsCount: abListKeys.length
+            formatNumber: formatCardNumber,
+            artboardsCount: abKeys.length
         };
     },
 
@@ -3295,7 +3342,7 @@ var VectorToolkitHost = {
 
             for (var i = 0; i < maxPreview; i++) {
                 var unit = items[i];
-                var curVal = unit.textFrame ? unit.textFrame.contents : "";
+                var curVal = unit.textFrame ? unit.textFrame.contents.replace(/^\s+|\s+$/g, "") : "";
                 var targetVal = data.prefix + data.formatNumber(data.startNum + i, data.padDigits, data.digitLang, unit.textFrame) + data.suffix;
                 previewList.push({
                     index: i + 1,
@@ -3313,7 +3360,7 @@ var VectorToolkitHost = {
                 success: true,
                 count: items.length,
                 artboardsCount: data.artboardsCount,
-                range: sampleStart + " to " + sampleEnd,
+                range: sampleStart + " থেকে " + sampleEnd,
                 preview: previewList
             });
         } catch (err) {
@@ -3338,15 +3385,52 @@ var VectorToolkitHost = {
                 if (!tf) continue;
 
                 var numVal = data.startNum + i;
-                var finalTxt = data.prefix + data.formatNumber(numVal, data.padDigits, data.digitLang, tf) + data.suffix;
+                var finalStr = data.prefix + data.formatNumber(numVal, data.padDigits, data.digitLang, tf) + data.suffix;
 
                 try {
-                    tf.contents = finalTxt;
+                    // Preserve existing styling
+                    var origFont = null;
+                    var origSize = 10;
+                    var origColor = null;
+                    var origLeading = null;
+                    var origHScale = null;
+                    var origJust = null;
+
+                    if (tf.textRange && tf.textRange.characterAttributes) {
+                        var ca = tf.textRange.characterAttributes;
+                        origFont = ca.textFont;
+                        origSize = ca.size;
+                        origColor = ca.fillColor;
+                        origLeading = ca.leading;
+                        origHScale = ca.horizontalScale;
+                    }
+
+                    if (tf.paragraphs && tf.paragraphs.length > 0 && tf.paragraphs[0].paragraphAttributes) {
+                        origJust = tf.paragraphs[0].paragraphAttributes.justification;
+                    }
+
+                    // Apply new number
+                    tf.contents = finalStr;
+
+                    // Re-apply preserved attributes
+                    if (tf.textRange && tf.textRange.characterAttributes) {
+                        var ca2 = tf.textRange.characterAttributes;
+                        if (origFont) ca2.textFont = origFont;
+                        if (origSize > 0) ca2.size = origSize;
+                        if (origColor && origColor.typename !== "NoColor") ca2.fillColor = origColor;
+                        if (origLeading > 0) ca2.leading = origLeading;
+                        if (origHScale > 0) ca2.horizontalScale = origHScale;
+                    }
+
+                    if (origJust !== null && tf.paragraphs && tf.paragraphs.length > 0 && tf.paragraphs[0].paragraphAttributes) {
+                        tf.paragraphs[0].paragraphAttributes.justification = origJust;
+                    }
+
                     modifiedCount++;
                 } catch(modErr) {}
             }
 
-            app.redraw();
+            try { app.redraw(); } catch(reErr) {}
 
             var endNumVal = data.startNum + items.length - 1;
             var sampleStart = data.prefix + data.formatNumber(data.startNum, data.padDigits, data.digitLang, items[0].textFrame) + data.suffix;
@@ -3357,45 +3441,447 @@ var VectorToolkitHost = {
                 count: modifiedCount,
                 total: items.length,
                 artboardsCount: data.artboardsCount,
-                range: sampleStart + " to " + sampleEnd
+                range: sampleStart + " থেকে " + sampleEnd
             });
         } catch (err) {
             return JSON.stringify({ success: false, error: err.toString() });
         }
+    },
+
+    launchCardNumberingProDialog: function () {
+        try {
+            var curFile = new File($.fileName);
+            var extFolder = curFile.parent.parent;
+            var scriptFile = new File(extFolder.fsName + "/Card_Numbering_Pro.jsx");
+            if (!scriptFile.exists) {
+                scriptFile = new File(extFolder.fsName + "/Auto_Card_Serial_Number.jsx");
+            }
+            if (scriptFile.exists) {
+                $.evalFile(scriptFile);
+                return JSON.stringify({ success: true });
+            } else {
+                return JSON.stringify({ success: false, error: "Card_Numbering_Pro.jsx file not found in extension directory." });
+            }
+        } catch (e) {
+            return JSON.stringify({ success: false, error: e.toString() });
+        }
+    },
+    // ========================================================
+    // TAB 11: MASTER QR CODE IMPORTER & REPLACER ENGINE
+    // ========================================================
+    browseForQRFolder: function () {
+        var fldr = Folder.selectDialog("আপনার QR কোডের ফোল্ডারটি সিলেক্ট করুন");
+        if (fldr) {
+            var fls = fldr.getFiles(function (file) {
+                if (file instanceof Folder) return false;
+                return /\.(png|jpe?g|svg|tif|tiff)$/i.test(file.name);
+            });
+            return JSON.stringify({
+                success: true,
+                folderPath: fldr.fsName,
+                fileCount: fls.length
+            });
+        }
+        return JSON.stringify({ success: false });
+    },
+
+    _getQRImageFiles: function (fldr) {
+        var fls = fldr.getFiles(function (file) {
+            if (file instanceof Folder) return false;
+            return /\.(png|jpe?g|svg|tif|tiff)$/i.test(file.name);
+        });
+        fls.sort(function (a, b) {
+            var nameA = decodeURI(a.name);
+            var nameB = decodeURI(b.name);
+            var re = /(\d+)|(\D+)/g, aParts = [], bParts = [], m;
+            while ((m = re.exec(nameA)) !== null) aParts.push(m[1] ? parseInt(m[1], 10) : m[2].toLowerCase());
+            re.lastIndex = 0;
+            while ((m = re.exec(nameB)) !== null) bParts.push(m[1] ? parseInt(m[1], 10) : m[2].toLowerCase());
+            var len = Math.min(aParts.length, bParts.length);
+            for (var idx = 0; idx < len; idx++) {
+                if (aParts[idx] !== bParts[idx]) {
+                    if (typeof aParts[idx] === "number" && typeof bParts[idx] === "number") {
+                        return aParts[idx] - bParts[idx];
+                    }
+                    return aParts[idx] < bParts[idx] ? -1 : 1;
+                }
+            }
+            return aParts.length - bParts.length;
+        });
+        return fls;
+    },
+
+    _collectQRImages: function (items, result) {
+        for (var j = 0; j < items.length; j++) {
+            var itm = items[j];
+            if (itm.typename === "PlacedItem" || itm.typename === "RasterItem") {
+                result.push(itm);
+            } else if (itm.typename === "GroupItem") {
+                this._collectQRImages(itm.pageItems, result);
+            }
+        }
+    },
+
+    _scanDocForQRCodes: function (d, result) {
+        for (var p = 0; p < d.placedItems.length; p++) {
+            var pItm = d.placedItems[p];
+            if (this._isQRCodeCandidate(pItm)) result.push(pItm);
+        }
+        for (var r = 0; r < d.rasterItems.length; r++) {
+            var rItm = d.rasterItems[r];
+            if (this._isQRCodeCandidate(rItm)) result.push(rItm);
+        }
+    },
+
+    _isQRCodeCandidate: function (itm) {
+        var w = itm.width;
+        var h = itm.height;
+        return (w >= 15 && w <= 70 && h >= 15 && h <= 100);
+    },
+
+    _findClipMask: function (item) {
+        var p = item.parent;
+        while (p && p.typename === "GroupItem") {
+            if (p.clipped) {
+                for (var m = 0; m < p.pageItems.length; m++) {
+                    if (p.pageItems[m].clipping) {
+                        return p.pageItems[m];
+                    }
+                }
+                if (p.pageItems.length > 0) return p.pageItems[0];
+            }
+            p = p.parent;
+        }
+        return null;
+    },
+
+    _getSortedVisualArtboards: function (d) {
+        var abs = [];
+        for (var i = 0; i < d.artboards.length; i++) {
+            abs.push({
+                index: i,
+                left: d.artboards[i].artboardRect[0],
+                rect: d.artboards[i].artboardRect
+            });
+        }
+        abs.sort(function (a, b) { return a.left - b.left; });
+        return abs;
+    },
+
+    _getArtboardIndexVisual: function (item, d) {
+        var cx = item.left + (item.width / 2);
+        var cy = item.top - (item.height / 2);
+        var visAbs = this._getSortedVisualArtboards(d);
+
+        for (var k = 0; k < visAbs.length; k++) {
+            var r = visAbs[k].rect;
+            if (cx >= r[0] && cx <= r[2] && cy <= r[1] && cy >= r[3]) {
+                return k;
+            }
+        }
+        var bestIdx = 0;
+        var minDiff = 999999;
+        for (var m = 0; m < visAbs.length; m++) {
+            var diff = Math.abs(cx - visAbs[m].left);
+            if (diff < minDiff) {
+                minDiff = diff;
+                bestIdx = m;
+            }
+        }
+        return bestIdx;
+    },
+
+    _sortCardsSmart: function (items, d) {
+        if (items.length <= 1) return items;
+
+        var visAbs = this._getSortedVisualArtboards(d);
+        var abGroups = {};
+
+        for (var i = 0; i < items.length; i++) {
+            var itm = items[i];
+            var ab = this._getArtboardIndexVisual(itm, d);
+            if (!abGroups[ab]) abGroups[ab] = [];
+            abGroups[ab].push(itm);
+        }
+
+        var sortedResult = [];
+
+        function getRowAvgTop(row) {
+            var sum = 0;
+            for (var i = 0; i < row.length; i++) sum += row[i].top;
+            return sum / row.length;
+        }
+
+        for (var abIdx = 0; abIdx < visAbs.length; abIdx++) {
+            var group = abGroups[abIdx];
+            if (!group || group.length === 0) continue;
+
+            group.sort(function (a, b) { return b.top - a.top; });
+
+            var rowTolerance = 110;
+            var rows = [];
+
+            for (var g = 0; g < group.length; g++) {
+                var itm = group[g];
+                var placedInRow = false;
+
+                for (var r = 0; r < rows.length; r++) {
+                    var avgRowTop = getRowAvgTop(rows[r]);
+                    if (Math.abs(itm.top - avgRowTop) <= rowTolerance) {
+                        rows[r].push(itm);
+                        placedInRow = true;
+                        break;
+                    }
+                }
+
+                if (!placedInRow) {
+                    rows.push([itm]);
+                }
+            }
+
+            rows.sort(function (rowA, rowB) {
+                return getRowAvgTop(rowB) - getRowAvgTop(rowA);
+            });
+
+            for (var rIdx = 0; rIdx < rows.length; rIdx++) {
+                rows[rIdx].sort(function (a, b) {
+                    return a.left - b.left;
+                });
+                for (var k = 0; k < rows[rIdx].length; k++) {
+                    sortedResult.push(rows[rIdx][k]);
+                }
+            }
+        }
+
+        return sortedResult;
+    },
+
+    scanQRCodes: function (configJson) {
+        try {
+            if (app.documents.length === 0) {
+                return JSON.stringify({ success: false, error: "কোনো ইলাস্ট্রেটর ডকুমেন্ট খোলা নেই!" });
+            }
+            var doc = app.activeDocument;
+            var cfg = (typeof configJson === "string") ? eval("(" + configJson + ")") : (configJson || {});
+
+            var folderPath = cfg.folderPath || "";
+            if (!folderPath) {
+                return JSON.stringify({ success: false, error: "অনুগ্রহ করে প্রথমে QR কোডের ফোল্ডার সিলেক্ট করুন।" });
+            }
+
+            var fldr = new Folder(folderPath);
+            if (!fldr.exists) {
+                return JSON.stringify({ success: false, error: "সিলেক্ট করা ফোল্ডারটি খুঁজে পাওয়া যায়নি!" });
+            }
+
+            var imageFiles = this._getQRImageFiles(fldr);
+            if (imageFiles.length === 0) {
+                return JSON.stringify({ success: false, error: "ফোল্ডারে কোনো ইমেজ ফাইল (png, jpg, svg) পাওয়া যায়নি!" });
+            }
+
+            var targetItems = [];
+            var scope = cfg.scope || "selection";
+
+            if (scope === "selection") {
+                var sel = doc.selection;
+                if (!sel || sel.length === 0) {
+                    return JSON.stringify({ success: false, error: "কোনো অবজেক্ট সিলেক্ট করা নেই! দয়া করে কার্ডগুলো সিলেক্ট করুন অথবা 'All Document QRs' বেছে নিন।" });
+                }
+                this._collectQRImages(sel, targetItems);
+            } else {
+                this._scanDocForQRCodes(doc, targetItems);
+            }
+
+            if (targetItems.length === 0) {
+                return JSON.stringify({ success: false, error: "ডকুমেন্টে কোনো ম্যাচিং QR কোড অবজেক্ট পাওয়া যায়নি!" });
+            }
+
+            var sortedTargets = this._sortCardsSmart(targetItems.slice(0), doc);
+            var maxLen = Math.min(sortedTargets.length, imageFiles.length);
+
+            var previewLines = [];
+            var maxPreview = Math.min(maxLen, 12);
+
+            for (var i = 0; i < maxPreview; i++) {
+                var abIdx = this._getArtboardIndexVisual(sortedTargets[i], doc);
+                var fName = decodeURI(imageFiles[i].name);
+                previewLines.push("[" + (i + 1) + "] " + fName + " ➔ (Page " + (abIdx + 1) + ")");
+            }
+
+            return JSON.stringify({
+                success: true,
+                targetCount: sortedTargets.length,
+                fileCount: imageFiles.length,
+                matchCount: maxLen,
+                preview: previewLines
+            });
+        } catch (err) {
+            return JSON.stringify({ success: false, error: err.toString() });
+        }
+    },
+
+    executeReplaceQRCodes: function (configJson) {
+        try {
+            if (app.documents.length === 0) {
+                return JSON.stringify({ success: false, error: "কোনো ইলাস্ট্রেটর ডকুমেন্ট খোলা নেই!" });
+            }
+            var doc = app.activeDocument;
+            var cfg = (typeof configJson === "string") ? eval("(" + configJson + ")") : (configJson || {});
+
+            var folderPath = cfg.folderPath || "";
+            if (!folderPath) {
+                return JSON.stringify({ success: false, error: "অনুগ্রহ করে QR কোডের ফোল্ডার সিলেক্ট করুন।" });
+            }
+
+            var fldr = new Folder(folderPath);
+            if (!fldr.exists) {
+                return JSON.stringify({ success: false, error: "ফোল্ডার খুঁজে পাওয়া যায়নি!" });
+            }
+
+            var imageFiles = this._getQRImageFiles(fldr);
+            if (imageFiles.length === 0) {
+                return JSON.stringify({ success: false, error: "ফোল্ডারে কোনো ইমেজ ফাইল পাওয়া যায়নি!" });
+            }
+
+            var targetItems = [];
+            var scope = cfg.scope || "selection";
+
+            if (scope === "selection") {
+                var sel = doc.selection;
+                if (!sel || sel.length === 0) {
+                    return JSON.stringify({ success: false, error: "কোনো অবজেক্ট সিলেক্ট করা নেই!" });
+                }
+                this._collectQRImages(sel, targetItems);
+            } else {
+                this._scanDocForQRCodes(doc, targetItems);
+            }
+
+            if (targetItems.length === 0) {
+                return JSON.stringify({ success: false, error: "কোনো QR কোড অবজেক্ট পাওয়া যায়নি!" });
+            }
+
+            targetItems = this._sortCardsSmart(targetItems, doc);
+            var shouldEmbed = (cfg.shouldEmbed !== false);
+
+            var count = Math.min(targetItems.length, imageFiles.length);
+            var successCount = 0;
+
+            for (var i = 0; i < count; i++) {
+                var target = targetItems[i];
+                var newFile = imageFiles[i];
+
+                try {
+                    var targetParent = target.parent;
+
+                    if (target.locked) target.locked = false;
+                    if (target.layer && target.layer.locked) target.layer.locked = false;
+
+                    // 0.5 inch = 36 pt
+                    var targetW = 36;
+                    var targetH = 36;
+
+                    var mask = this._findClipMask(target);
+                    var centerX, centerY;
+
+                    if (mask) {
+                        if (Math.abs(mask.width - 36) < 8) {
+                            targetW = mask.width;
+                            targetH = mask.height;
+                        }
+                        centerX = mask.left + (mask.width / 2);
+                        centerY = mask.top - (mask.height / 2);
+                    } else {
+                        centerX = target.left + (target.width / 2);
+                        centerY = target.top - (target.height / 2);
+                    }
+
+                    var newPlaced = targetParent.placedItems.add();
+                    newPlaced.file = newFile;
+                    newPlaced.move(target, ElementPlacement.PLACEBEFORE);
+
+                    newPlaced.width = targetW;
+                    newPlaced.height = targetH;
+                    newPlaced.left = centerX - (targetW / 2);
+                    newPlaced.top = centerY + (targetH / 2);
+
+                    if (shouldEmbed) {
+                        try { newPlaced.embed(); } catch (embErr) {}
+                    }
+
+                    target.remove();
+                    successCount++;
+                } catch (e) {}
+            }
+
+            try { app.redraw(); } catch (err) {}
+
+            return JSON.stringify({
+                success: true,
+                count: successCount,
+                total: count
+            });
+        } catch (err) {
+            return JSON.stringify({ success: false, error: err.toString() });
+        }
+    },
+
+    launchReplaceQRCodeDialog: function () {
+        try {
+            var curFile = new File($.fileName);
+            var extFolder = curFile.parent.parent;
+            var scriptFile = new File(extFolder.fsName + "/Replace_QR_Codes.jsx");
+            if (scriptFile.exists) {
+                $.evalFile(scriptFile);
+                return JSON.stringify({ success: true });
+            } else {
+                return JSON.stringify({ success: false, error: "Replace_QR_Codes.jsx not found in extension directory." });
+            }
+        } catch (e) {
+            return JSON.stringify({ success: false, error: e.toString() });
+        }
     }
+
 };
 
 function openWebUrl(url) {
     try {
         var isMac = (File.fs === "Macintosh" || (typeof $.os !== "undefined" && $.os.indexOf("Mac") !== -1));
         if (isMac) {
-            try {
-                var webloc = new File(Folder.temp.fsName + "/open_vt_link.webloc");
-                webloc.open("w");
-                webloc.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<dict>\n\t<key>URL</key>\n\t<string>' + url + '</string>\n</dict>\n</plist>');
-                webloc.close();
-                webloc.execute();
-            } catch (err1) {}
-
+            var opened = false;
             try {
                 if (typeof app.system === "function") {
                     app.system('/usr/bin/open "' + url + '"');
+                    opened = true;
                 }
-            } catch (err2) {}
-        } else {
-            try {
-                var urlFile = new File(Folder.temp.fsName + "/open_vt_link.url");
-                urlFile.open("w");
-                urlFile.write('[InternetShortcut]\r\nURL=' + url + '\r\n');
-                urlFile.close();
-                urlFile.execute();
-            } catch (err3) {}
+            } catch (err1) {}
 
+            if (!opened) {
+                try {
+                    var webloc = new File(Folder.temp.fsName + "/open_vt_link.webloc");
+                    webloc.open("w");
+                    webloc.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<dict>\n\t<key>URL</key>\n\t<string>' + url + '</string>\n</dict>\n</plist>');
+                    webloc.close();
+                    webloc.execute();
+                } catch (err2) {}
+            }
+        } else {
+            var openedWin = false;
             try {
                 if (typeof app.system === "function") {
                     app.system('cmd.exe /c start "" "' + url + '"');
+                    openedWin = true;
                 }
-            } catch (err4) {}
+            } catch (err3) {}
+
+            if (!openedWin) {
+                try {
+                    var urlFile = new File(Folder.temp.fsName + "/open_vt_link.url");
+                    urlFile.open("w");
+                    urlFile.write('[InternetShortcut]\r\nURL=' + url + '\r\n');
+                    urlFile.close();
+                    urlFile.execute();
+                } catch (err4) {}
+            }
         }
     } catch (e) {}
 }

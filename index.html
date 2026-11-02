@@ -36,7 +36,8 @@
             <button class="tab-button" data-tab="page-pagenum" style="background: rgba(255, 140, 0, 0.12); border: 1px solid #ff8c00; color: #ff9e00;">Page Numbers</button>
         </div>
         <div class="nav-row">
-            <button class="tab-button" data-tab="page-cardserial" style="background: linear-gradient(135deg, rgba(0, 230, 118, 0.18), rgba(0, 180, 216, 0.18)); border: 1px solid #00e676; color: #00e676; font-weight: 700; width: 100%; padding: 6px 4px;">Card Serial Auto-Filler (01 - 02, 03 - 04...)</button>
+            <button class="tab-button" data-tab="page-cardserial" style="background: linear-gradient(135deg, rgba(0, 230, 118, 0.18), rgba(0, 180, 216, 0.18)); border: 1px solid #00e676; color: #00e676; font-weight: 700; padding: 6px 4px;">🎯 Numbering Pro</button>
+            <button class="tab-button" data-tab="page-qrcode" style="background: linear-gradient(135deg, rgba(255, 64, 129, 0.18), rgba(156, 39, 176, 0.18)); border: 1px solid #ff4081; color: #ff80ab; font-weight: 700; padding: 6px 4px;">🔳 Replace QR Codes</button>
         </div>
     </nav>
 
@@ -51,20 +52,6 @@
                 <div class="row">
                     <input type="text" id="relink-filepath" placeholder="" style="flex: 1;">
                     <button class="btn-browse" id="btn-browse-file">Browse...</button>
-                </div>
-            </fieldset>
-
-            <fieldset class="panel-box" style="margin-bottom: 8px;">
-                <legend>Choose ANSI Version / Engine:</legend>
-                <div style="display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap;">
-                    <button type="button" class="btn-ansi-version active" data-version="auto" style="flex: 1; min-width: 70px; padding: 7px 4px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #ff4500; background: #ff4500; color: #ffffff; cursor: pointer; transition: all 0.2s;">Auto</button>
-                    <button type="button" class="btn-ansi-version" data-version="v1" style="flex: 1; min-width: 65px; padding: 7px 4px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #444; background: #282828; color: #bbb; cursor: pointer; transition: all 0.2s;">ANSI V1</button>
-                    <button type="button" class="btn-ansi-version" data-version="v2" style="flex: 1; min-width: 65px; padding: 7px 4px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #444; background: #282828; color: #bbb; cursor: pointer; transition: all 0.2s;">ANSI V2</button>
-                    <button type="button" class="btn-ansi-version" data-version="v3" style="flex: 1; min-width: 65px; padding: 7px 4px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #444; background: #282828; color: #bbb; cursor: pointer; transition: all 0.2s;">ANSI V3</button>
-                </div>
-                <input type="hidden" id="selected-bijoy-version" value="auto">
-                <div id="version-desc-text" style="font-size: 10.5px; color: #aaa; margin-top: 6px; line-height: 1.3;">
-                    Mode: <strong style="color: #ff7733;" id="version-mode-title">Auto-Detect</strong> <span id="version-mode-sub">(Tests V1, V2 & V3 dynamically for cleanest output)</span>
                 </div>
             </fieldset>
 
@@ -552,11 +539,11 @@
         </fieldset>
     </main>
 
-    <!-- TAB 10: SMART CARD SERIAL NUMBER AUTO-FILLER (01-02, 03-04...) -->
+    <!-- TAB 10: NUMBERING PRO - 1-CLICK CARD SERIAL FIXER -->
     <main id="page-cardserial" class="tab-page">
         <fieldset class="panel-box">
-            <legend>Card Serial Auto-Filler (কার্ড সিরিয়াল অটোমেশন)</legend>
-            <p class="panel-desc">কার্ডের নিচের <strong style="color: #00e676;">00</strong> বা <strong style="color: #00e676;">০০</strong> অটোমেটিক শনাক্ত করে গ্রিড অনুযায়ী সিরিয়াল ফিল করবে (01-02, 03-04...):</p>
+            <legend>🎯 Numbering Pro (কার্ড সিরিয়াল অটোমেশন)</legend>
+            <p class="panel-desc">আইডি কার্ড, বায়ো কার্ড বা সার্টিফিকেটের সিরিয়াল <strong style="color: #00e676;">১-ক্লিকে ১ থেকে ১০০+ ক্রমানুসারে</strong> বসানো এবং ডুপ্লিকেট বা ভুল সিরিয়াল ফিক্স করার প্রো ইঞ্জিন:</p>
 
             <!-- Target Scope Selection -->
             <fieldset class="panel-box" style="margin-bottom: 8px;">
@@ -572,53 +559,45 @@
                     </label>
                     <label class="radio-label">
                         <input type="radio" name="cardserial-scope" value="selection" id="rb-cardserial-sel">
-                        <span>Selected Only</span>
+                        <span>Selected Cards</span>
                     </label>
                 </div>
             </fieldset>
 
             <!-- Number Sequence & Format -->
             <fieldset class="panel-box" style="margin-bottom: 8px;">
-                <legend>Number Format & Sequence (সিরিয়াল ফরম্যাট):</legend>
+                <legend>Number Format & Style (সিরিয়াল ফরম্যাট):</legend>
                 <div class="row" style="margin-bottom: 6px;">
-                    <div style="flex: 1; display: flex; align-items: center; gap: 5px;">
+                    <div style="flex: 1.1; display: flex; align-items: center; gap: 4px;">
                         <span style="font-size: 10.5px; color: #ccc;">Start At:</span>
                         <input type="number" id="cardserial-start" value="1" min="0" style="width: 50px; text-align: center; padding: 4px; background: #262626; border: 1px solid #444; color: #fff; border-radius: 3px;">
                     </div>
-                    <div style="flex: 1.5; display: flex; align-items: center; gap: 5px;">
-                        <span style="font-size: 10.5px; color: #ccc;">Padding:</span>
-                        <select id="cardserial-padding" style="flex: 1; padding: 4px; background: #262626; border: 1px solid #444; color: #fff; border-radius: 3px; font-size: 10.5px;">
-                            <option value="2" selected>01, 02, 03... (2 Digits)</option>
-                            <option value="1">1, 2, 3... (No Padding)</option>
-                            <option value="3">001, 002, 003... (3 Digits)</option>
-                            <option value="4">0001, 0002... (4 Digits)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="row" style="margin-bottom: 6px;">
-                    <div style="flex: 1; display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 10.5px; color: #ccc;">Digits:</span>
-                        <select id="cardserial-digit-lang" style="flex: 1; padding: 4px; background: #262626; border: 1px solid #444; color: #fff; border-radius: 3px; font-size: 10.5px;">
-                            <option value="auto" selected>Auto-Detect (বাংলা/English)</option>
-                            <option value="en">English (01, 02, 03...)</option>
-                            <option value="bn">বাংলা (০১, ০২, ০৩...)</option>
+                    <div style="flex: 2.9; display: flex; align-items: center; gap: 4px;">
+                        <span style="font-size: 10.5px; color: #ccc;">Format:</span>
+                        <select id="cardserial-format-preset" style="flex: 1; padding: 4px 3px; background: #262626; border: 1px solid #444; color: #fff; border-radius: 3px; font-size: 10px;">
+                            <option value="bn-nopad" selected>বাংলা: ১, ২, ৩... ১০০ (প্যাডিং ছাড়া - ডিফল্ট)</option>
+                            <option value="bn-2pad">বাংলা: ০১, ০২, ০৩... ১০০ (২ ডিজিট)</option>
+                            <option value="bn-3pad">বাংলা: ০০১, ০০২... ১০০ (৩ ডিজিট)</option>
+                            <option value="en-nopad">English: 1, 2, 3... 100 (No Padding)</option>
+                            <option value="en-2pad">English: 01, 02, 03... 100 (2 Digits)</option>
+                            <option value="en-3pad">English: 001, 002... 100 (3 Digits)</option>
+                            <option value="auto">Auto-Detect (ফন্ট ও টেক্সট অনুযায়ী)</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="row">
-                    <div style="flex: 1; display: flex; align-items: center; gap: 4px;">
-                        <span style="font-size: 10.5px; color: #aaa;">Prefix:</span>
-                        <input type="text" id="cardserial-prefix" placeholder="None" style="width: 45px; padding: 4px; background: #262626; border: 1px solid #444; color: #fff; border-radius: 3px;">
+                    <div style="flex: 1; display: flex; align-items: center; gap: 3px;">
+                        <span style="font-size: 10px; color: #aaa;">Prefix:</span>
+                        <input type="text" id="cardserial-prefix" placeholder="None" style="width: 42px; padding: 4px; background: #262626; border: 1px solid #444; color: #fff; border-radius: 3px;">
                     </div>
-                    <div style="flex: 1; display: flex; align-items: center; gap: 4px;">
-                        <span style="font-size: 10.5px; color: #aaa;">Suffix:</span>
-                        <input type="text" id="cardserial-suffix" placeholder="None" style="width: 45px; padding: 4px; background: #262626; border: 1px solid #444; color: #fff; border-radius: 3px;">
+                    <div style="flex: 1; display: flex; align-items: center; gap: 3px;">
+                        <span style="font-size: 10px; color: #aaa;">Suffix:</span>
+                        <input type="text" id="cardserial-suffix" placeholder="None" style="width: 42px; padding: 4px; background: #262626; border: 1px solid #444; color: #fff; border-radius: 3px;">
                     </div>
-                    <div style="flex: 1.2; display: flex; align-items: center; gap: 4px;">
-                        <span style="font-size: 10.5px; color: #aaa;">Target:</span>
-                        <input type="text" id="cardserial-placeholder" value="00" placeholder="00" style="width: 40px; text-align: center; padding: 4px; background: #262626; border: 1px solid #444; color: #00e676; border-radius: 3px; font-weight: bold;">
+                    <div style="flex: 1.3; display: flex; align-items: center; gap: 3px;">
+                        <span style="font-size: 10px; color: #aaa;">Target:</span>
+                        <input type="text" id="cardserial-placeholder" value="Auto" placeholder="Auto" style="width: 46px; text-align: center; padding: 4px; background: #262626; border: 1px solid #444; color: #00e676; border-radius: 3px; font-weight: bold;" title="Auto matches existing serial badges or type specific text">
                     </div>
                 </div>
             </fieldset>
@@ -629,31 +608,95 @@
                 <div class="row" style="margin-bottom: 4px;">
                     <label class="radio-label" style="margin-right: 15px; font-weight: 600; color: #00e676;">
                         <input type="radio" name="cardserial-order" value="row" checked id="rb-cardserial-order-row">
-                        <span>Row-by-Row (01-02, 03-04...) [আড়াআড়ি]</span>
+                        <span>Row-by-Row: ১ - ২, ৩ - ৪... (আড়াআড়ি / Grid)</span>
                     </label>
                 </div>
                 <div class="row">
                     <label class="radio-label" style="color: #bbb;">
                         <input type="radio" name="cardserial-order" value="column" id="rb-cardserial-order-col">
-                        <span>Column-by-Column (01-04, 02-05...) [লম্বালম্বি]</span>
+                        <span>Column-by-Column: ১ - ৫, ২ - ৬... (ওপর-নিচ / কাটিং স্ট্যাক)</span>
                     </label>
                 </div>
-                <div style="font-size: 10px; color: #888; margin-top: 4px; line-height: 1.3;">
-                    Row-by-Row মোডে বামের কার্ড পাবে 01, ডানের কার্ড পাবে 02, নিচের সারিতে 03, 04...
+                <div style="font-size: 9.5px; color: #888; margin-top: 4px; line-height: 1.3;">
+                    ✨ ফন্ট, সাইজ, কালার, লিডিং এবং সেন্টার অ্যালাইনমেন্ট ১০০% অক্ষুণ্ণ থাকবে (সুতন্নিএমজে ও ইউনিকোড ফুল সেফ)।
                 </div>
             </fieldset>
 
             <!-- Action Buttons -->
             <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-                <button type="button" class="btn-token" id="btn-cardserial-scan" style="flex: 1; padding: 7px 6px; font-size: 11px; background: #283038; color: #00b0ff; border: 1px solid #0091ea; border-radius: 3px; cursor: pointer; font-weight: 600;">🔍 Scan & Preview Cards</button>
+                <button type="button" class="btn-token" id="btn-cardserial-scan" style="flex: 1.2; padding: 7px 6px; font-size: 11px; background: #283038; color: #00b0ff; border: 1px solid #0091ea; border-radius: 3px; cursor: pointer; font-weight: 600;">🔍 Scan & Live Preview</button>
+                <button type="button" class="btn-token" id="btn-cardserial-dialog" style="flex: 1; padding: 7px 6px; font-size: 10.5px; background: #332d20; color: #ffb300; border: 1px solid #ff9800; border-radius: 3px; cursor: pointer; font-weight: 600;" title="Open standalone floating dialog window">▶ Standalone Window</button>
             </div>
 
-            <button class="btn-action-main" id="btn-cardserial-apply" style="background: linear-gradient(135deg, #00c853, #0091ea); color: #ffffff; font-weight: 700; font-size: 12px; padding: 10px; border: none; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.4); box-shadow: 0 2px 8px rgba(0, 200, 83, 0.3);">⚡ Apply Auto Serial (01, 02, 03...)</button>
+            <button class="btn-action-main" id="btn-cardserial-apply" style="background: linear-gradient(135deg, #00c853, #0091ea); color: #ffffff; font-weight: 700; font-size: 12px; padding: 10px; border: none; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.4); box-shadow: 0 2px 8px rgba(0, 200, 83, 0.3);">⚡ 1-Click Apply Serial (১ ক্লিকে সিরিয়াল বসান)</button>
 
             <!-- Status Box -->
             <div id="cardserial-status-box" style="display: none; margin-top: 10px; background: #1c2420; border: 1px solid #00c853; border-radius: 3px; padding: 8px 10px; font-size: 10.5px; color: #d0f8ce;">
                 <div style="font-weight: 600; color: #00e676; margin-bottom: 4px;" id="cardserial-status-heading">Status</div>
                 <div id="cardserial-status-details" style="color: #a8dfaf; line-height: 1.45;"></div>
+            </div>
+        </fieldset>
+    </main>
+
+    <!-- TAB 11: MASTER QR CODE IMPORTER & REPLACER -->
+    <main id="page-qrcode" class="tab-page">
+        <fieldset class="panel-box">
+            <legend>🔳 Replace QR Codes (কিউআর কোড রিপ্লেসার)</legend>
+            <p class="panel-desc">নির্দিষ্ট ফোল্ডারের স্কয়ার QR কোডগুলো (01, 02... 61+) আর্টবোর্ড বা কার্ডের স্থানে স্বয়ংক্রিয়ভাবে ম্যাচ, সেন্টার ও রিপ্লেস করুন:</p>
+
+            <!-- QR Folder Browser -->
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>QR Images Folder (কিউআর কোডের ফোল্ডার):</legend>
+                <div class="row" style="margin-bottom: 4px;">
+                    <input type="text" id="qrcode-folderpath" placeholder="Select QR codes folder..." style="flex: 1;" readonly>
+                    <button class="btn-browse" id="btn-browse-qrfolder">Browse...</button>
+                </div>
+                <div id="qrcode-file-count" style="font-size: 10px; color: #aaa; margin-top: 2px;">কোনো ফোল্ডার সিলেক্ট করা নেই</div>
+            </fieldset>
+
+            <!-- Target Scope Selection -->
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Target Scope (কোথায় রিপ্লেস করবেন):</legend>
+                <div class="row">
+                    <label class="radio-label" style="margin-right: 12px;">
+                        <input type="radio" name="qrcode-scope" value="selection" checked id="rb-qrcode-sel">
+                        <span id="lbl-qrcode-sel">Selected Objects (সিলেকশন)</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="qrcode-scope" value="document" id="rb-qrcode-doc">
+                        <span id="lbl-qrcode-doc">All Document QRs (পুরো ডকুমেন্ট)</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <!-- Options: Size, Alignment & Embedding -->
+            <fieldset class="panel-box" style="margin-bottom: 8px;">
+                <legend>Settings & Alignment (সেটিংস):</legend>
+                <div class="row" style="margin-bottom: 5px;">
+                    <label class="radio-label" style="margin-right: 15px;">
+                        <input type="checkbox" id="chk-qrcode-embed" checked>
+                        <span>Embed new QR codes into document (ডকুমেন্টে এমবেড)</span>
+                    </label>
+                </div>
+                <div class="row">
+                    <div style="font-size: 10px; color: #888; line-height: 1.35;">
+                        📐 সাইজ: <strong>0.5 in x 0.5 in</strong> (ক্লিপিং মাস্ক থাকলে তার ঠিক মাঝখানে সেন্টার-এলাইন ও অটো-ফিট হবে)।
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                <button type="button" class="btn-token" id="btn-qrcode-scan" style="flex: 1.2; padding: 7px 6px; font-size: 11px; background: #283038; color: #00b0ff; border: 1px solid #0091ea; border-radius: 3px; cursor: pointer; font-weight: 600;">🔍 Scan & Match QRs</button>
+                <button type="button" class="btn-token" id="btn-qrcode-dialog" style="flex: 1; padding: 7px 6px; font-size: 10.5px; background: #33202d; color: #ff80ab; border: 1px solid #ff4081; border-radius: 3px; cursor: pointer; font-weight: 600;" title="Open standalone floating dialog window">▶ Standalone Window</button>
+            </div>
+
+            <button class="btn-action-main" id="btn-qrcode-apply" style="background: linear-gradient(135deg, #e91e63, #9c27b0); color: #ffffff; font-weight: 700; font-size: 12px; padding: 10px; border: none; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.4); box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);">⚡ Import & Replace QR Codes</button>
+
+            <!-- Status Box -->
+            <div id="qrcode-status-box" style="display: none; margin-top: 10px; background: #241c22; border: 1px solid #e91e63; border-radius: 3px; padding: 8px 10px; font-size: 10.5px; color: #f8cedb;">
+                <div style="font-weight: 600; color: #ff80ab; margin-bottom: 4px;" id="qrcode-status-heading">Status</div>
+                <div id="qrcode-status-details" style="color: #dfa8bf; line-height: 1.45;"></div>
             </div>
         </fieldset>
     </main>
@@ -684,13 +727,20 @@
         </div>
     </section>
 
-    <!-- Footer Credit -->
-        <!-- Footer Credit -->
-    <footer class="app-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 7px 12px; border-top: 1px solid #333333; background: #1e1e1e; font-size: 11px; margin-top: auto;">
-        <a href="https://github.com/yahiabinzaman" id="btn-author-link" class="footer-link" title="Visit GitHub Profile" onclick="openAuthorProfile(event); return false;" style="color: #9e9e9e; text-decoration: none; cursor: pointer;">
-            Developed by <strong style="color: #4a90e2; text-decoration: underline; font-weight: 600;">Yahia Bin Zaman</strong>
-        </a>
-        <span class="footer-version" style="font-size: 10px; color: #666666; font-family: monospace;">v2.0.0</span>
+    <!-- Unified Professional App Footer -->
+    <footer class="app-footer">
+        <div class="footer-left">
+            <span class="footer-brand">Vector Toolkit Pro</span>
+            <span class="footer-badge">v2.2</span>
+        </div>
+        <div class="footer-right">
+            <button type="button" id="btn-author-link" class="footer-author-btn" data-url="https://github.com/yahiabinzaman" title="Developed by Yahia Bin Zaman - Visit GitHub Profile">
+                <svg class="footer-github-icon" width="13" height="13" viewBox="0 0 24 24">
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                </svg>
+                <span class="footer-dev-text">Developed by <b>Yahia Bin Zaman</b></span>
+            </button>
+        </div>
     </footer>
 
     <script src="js/CSInterface.js"></script>
